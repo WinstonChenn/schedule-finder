@@ -1,6 +1,7 @@
 from ortools.sat.python import cp_model
 from SchedulePrinter import SchedulePrinter
 import numpy as np
+
 num_people = 4
 num_shifts = 3
 num_days = 3
