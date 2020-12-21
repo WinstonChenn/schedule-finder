@@ -18,4 +18,7 @@ for i in range(0, 10):          # ranges over the rows
         # print(m.loc[i][column_head], i, column_head)
         m.loc[i][column_head] = int(m.loc[i][column_head][0]) - 2
 
-m.to_excel("data/scaled_staff_req.xlsx")
+m_writer = pandas.ExcelWriter("data/scaled_staff_req.xlsx",
+                              datetime_format="mm/dd/yy")
+
+m.to_excel(m_writer)
