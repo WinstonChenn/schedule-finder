@@ -22,6 +22,7 @@
 # For all real shifts (sometimes more than 1 real shift perday), at least staff put non-negative prefernce
 import datetime
 import pandas
+import numpy as np
 
 
 class ScheduleInputProcessor:
@@ -34,17 +35,30 @@ class ScheduleInputProcessor:
         finally:
             print("input date format: d/m/y\n e.g. 20/12/20")
 
+        self.days = (self.start_date - self.end_date).days
         self.max_shifts = max_shifts
         self.num_staff = num_staff
         self.date_requirement_url = date_requirement_url
-        self.staff_reqirement_url = staff_requirement_url
+        self.staff_requirement_url = staff_requirement_url
 
     # provide file directory of csv to convert to pandas dataframe
     # should fit specs provided by InputProcessor.py
     def load_day_requirements(self):
-        pass
+        df = pandas.read_excel(self.date_requirement_url)
+        row_entries = df['date'].tolist()
+        col_entries = df.loc[:, df.columns != "date"].columns.tolist()
+        matrix = df.loc[:, df.columns != "date"].to_numpy()
+        return row_entries, col_entries, matrix
 
     # provide file directory of csv to convert to pandas dataframe
     # should fit specs provided by InputProcessor.py
-    def loadstaff_reqirements(self):
-        pass
+    def load_staff_reqirements(self):
+        df = pandas.read_excel(self.staff_requirement_url)
+        row_entries = df['people'].tolist()
+        col_entries = df.loc[:, df.columns != 'people'].columns.tolist()
+        matrix = df.loc[:, df.columns != 'people'].to_numpy()
+        return row_entries, col_entries, matrix
+
+
+    def get_preference_matrix(self):
+        pref_mat = np.zeros((self.num_staff, self.days, self.max_shifts))
