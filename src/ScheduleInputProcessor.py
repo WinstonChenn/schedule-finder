@@ -59,6 +59,5 @@ class ScheduleInputProcessor:
         matrix = df.loc[:, df.columns != 'people'].to_numpy()
         return row_entries, col_entries, matrix
 
-
     def get_preference_matrix(self):
         pref_mat = np.zeros((self.num_staff, self.days, self.max_shifts))
