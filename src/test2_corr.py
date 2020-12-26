@@ -24,6 +24,7 @@ def main():
                        [1, 0, 0], [0, 0, 0]],
                       [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 0, 0], [1, 0, 0],
                        [0, 1, 0], [0, 0, 0]]]
+    print(len(shift_requests))
     # Creates the model.
     model = cp_model.CpModel()
 
