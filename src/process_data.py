@@ -21,5 +21,6 @@ for i in range(0, 10):          # ranges over the rows
 m_writer = pandas.ExcelWriter("data/scaled_staff_req.xlsx",
                               datetime_format="mm/dd/yy")
 
+breakpoint()
 m.to_excel(m_writer, index=False)
 m_writer.save()
