@@ -66,7 +66,7 @@ def solve_schedule(preference_matrix, num_people, num_shifts, num_days):
         for p in peop_range:
             for s in shift_range:
                 if solver.Value(shifts[(p, d, s)]) == 1:
-                    if preference_matrix[p][d][s] == 1:
+                    if preference_matrix[p][d][s] >= 1:
                         print('Nurse', p, 'works shift', s, '(requested).')
                     else:
                         print('Nurse', p, 'works shift', s, '(not requested).')
@@ -92,4 +92,16 @@ processor = ScheduleInputProcessor(
 
 pref_mat = processor.get_preference_matrix()
 num_days = (datetime.datetime.strptime("3/12/21", "%m/%d/%y") - datetime.datetime.strptime("1/3/21", "%m/%d/%y")).days
-solve_schedule(preference_matrix=pref_mat, num_people=10, num_shifts=4, num_days=num_days)
+
+# print(pref_mat.shape)
+
+
+num_people = 10
+num_days = 2
+num_shifts = 4
+abridged = pref_mat[0:num_people, 0:num_days, 0:num_shifts]
+
+print(abridged.shape)
+print(abridged)
+
+solve_schedule(preference_matrix=abridged, num_people=num_people, num_shifts=num_shifts, num_days=num_days)
