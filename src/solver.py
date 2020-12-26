@@ -1,6 +1,8 @@
 from ortools.sat.python import cp_model
 from SchedulePrinter import SchedulePrinter
 import numpy as np
+import datetime
+from ScheduleInputProcessor import ScheduleInputProcessor
 
 def solve_schedule(preference_matrix, num_people, num_shifts, num_days):
     peop_range = range(num_people)
@@ -27,7 +29,7 @@ def solve_schedule(preference_matrix, num_people, num_shifts, num_days):
             model.Add(sum(shifts[(p, d, s)] for p in peop_range) == people_per_shift)
 
     # Each person works at most shifts_per_day, shifts per day.
-    shifts_per_day = 1 
+    shifts_per_day = 1
     for p in peop_range:
         for d in day_range:
             model.Add(sum(shifts[(p, d, s)] for s in shift_range) <= shifts_per_day)
@@ -76,3 +78,18 @@ def solve_schedule(preference_matrix, num_people, num_shifts, num_days):
     print('  - Number of shift requests met = %i' % solver.ObjectiveValue(),
           '(out of', num_people * min_shifts_per_person, ')')
     print('  - wall time       : %f s' % solver.WallTime())
+
+
+processor = ScheduleInputProcessor(
+    start_date="1/3/21",
+    end_date="3/12/21",
+    max_shifts=4,
+    num_staff=10,
+    date_requirement_url="../data/date_requirements.xlsx",
+    staff_requirement_url="../data/scaled_staff_req.xlsx",
+    holidays=["1/18/21", "2/15/21"]
+)
+
+pref_mat = processor.get_preference_matrix()
+num_days = (datetime.datetime.strptime("3/12/21", "%m/%d/%y") - datetime.datetime.strptime("1/3/21", "%m/%d/%y")).days
+solve_schedule(preference_matrix=pref_mat, num_people=10, num_shifts=4, num_days=num_days)
