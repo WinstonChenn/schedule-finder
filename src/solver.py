@@ -55,7 +55,7 @@ def solve_schedule(preference_matrix, num_people, num_shifts, num_days):
         model.Add(num_shifts_worked <= max_shifts_per_person)
 
     model.Maximize(
-        sum(preference_matrix[p][d][s] * shifts[(p, d, s)] for p in peop_range
+        sum(int(preference_matrix[p][d][s]) * shifts[(p, d, s)] for p in peop_range
             for d in day_range for s in shift_range))
     # Creates the solver and solve.
     solver = cp_model.CpSolver()
