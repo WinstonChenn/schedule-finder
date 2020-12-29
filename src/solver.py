@@ -4,7 +4,23 @@ import numpy as np
 import datetime
 from ScheduleInputProcessor import ScheduleInputProcessor
 
-def solve_schedule(preference_matrix, num_people, num_shifts, num_days):
+
+# given the binary setting for 4 shifts, solve maximum 
+# number of shifts one staff can have that day
+def get_max_shifts(shifts):
+    # col1_out: CB + AD + AB + CD
+    # col2_out: A !D !B + !B !D C + D !C !A + !A B !C
+    A = bool(shifts[0]); B = bool(shifts[1]); C = bool(shifts[2]); D = bool(shifts[3])
+    out1 = int(C & B | A & D | A & B | C & D)
+    out2 = int(A & (~D) & (~B) | (~B) & (~D) & C | D & (~C) & (~A) | (~A) & B & (~C))
+    print(out1, out2)
+    # convert to decimal
+    max_shift = out1 * 2**1 + out2 * 2**0
+
+    return max_shift
+    
+
+def solve_schedule(preference_matrix, shift_matrix, num_people, num_shifts, num_days):
     peop_range = range(num_people)
     day_range = range(num_days)
     shift_range = range(num_shifts)
@@ -14,24 +30,54 @@ def solve_schedule(preference_matrix, num_people, num_shifts, num_days):
         print("ERROR: Preference Matrix is incorrectly shaped.")
         return None
 
+    # setup all variables
     model = cp_model.CpModel()
     shifts = {}
     for p in peop_range:
         for d in day_range:
             for s in shift_range:
-                shifts[(p, d,
-                        s)] = model.NewBoolVar('shift_p%id%is%i' % (p, d, s))
+                shifts[(p, d, s)] = model.NewBoolVar('shift_p%id%is%i' % (p, d, s))
 
     # Each shift has people_per_shift people.
     people_per_shift = 1
     for d in day_range:
         for s in shift_range:
-            model.Add(sum(shifts[(p, d, s)] for p in peop_range) == people_per_shift)
+            valid = preference_matrix[0, d, s] > -2
+            if valid:
+                model.Add(sum(shifts[(p, d, s)] for p in peop_range) == people_per_shift)
+            else:
+                model.Add(sum(shifts[(p, d, s)] for p in peop_range) == 0)
 
     # Each person works at most shifts_per_day, shifts per day.
-    shifts_per_day = 1
+    # TODO: all multiple shift per day cases
+    # shift1(A) shift2(B) shift3(C) shift4(D)  max_shift_per_day_per_person
+    #     0        0         0         0             0      0
+    #     0        0         0         1             0      1
+    #     0        0         1         0             0      1
+    #     0        0         1         1             1      0
+
+    #     0        1         0         0             0      1
+    #     0        1         0         1             0      1
+    #     0        1         1         0             1      0
+    #     0        1         1         1             1      0
+
+    #     1        0         0         0             0      1
+    #     1        0         0         1             1      0
+    #     1        0         1         0             0      1
+    #     1        0         1         1             1      0
+
+    #     1        1         0         0             1      0
+    #     1        1         0         1             1      0
+    #     1        1         1         0             1      0
+    #     1        1         1         1             1      0
+
+    # col1_out: CB + AD + AB + CD
+    # col2_out: A !D !B + !B !D C + D !C !A + !A B !C
+
     for p in peop_range:
         for d in day_range:
+            shifts_per_day = get_max_shifts(shift_matrix[d])
+            print(shift_matrix[d], shifts_per_day)
             model.Add(sum(shifts[(p, d, s)] for s in shift_range) <= shifts_per_day)
 
     # Try to distribute the shifts evenly, so that each nurse works
@@ -54,6 +100,7 @@ def solve_schedule(preference_matrix, num_people, num_shifts, num_days):
         model.Add(min_shifts_per_person <= num_shifts_worked)
         model.Add(num_shifts_worked <= max_shifts_per_person)
 
+    # accomondate request
     model.Maximize(
         sum(int(preference_matrix[p][d][s]) * shifts[(p, d, s)] for p in peop_range
             for d in day_range for s in shift_range))
@@ -65,6 +112,8 @@ def solve_schedule(preference_matrix, num_people, num_shifts, num_days):
         print('Day', d)
         for p in peop_range:
             for s in shift_range:
+                print(p, d, s)
+                breakpoint()
                 if solver.Value(shifts[(p, d, s)]) == 1:
                     if preference_matrix[p][d][s] >= 1:
                         print('Nurse', p, 'works shift', s, '(requested).')
@@ -92,16 +141,16 @@ processor = ScheduleInputProcessor(
 
 pref_mat = processor.get_preference_matrix()
 num_days = (datetime.datetime.strptime("3/12/21", "%m/%d/%y") - datetime.datetime.strptime("1/3/21", "%m/%d/%y")).days
-
+dates, shifts, day_mat = processor.load_day_requirements()
 # print(pref_mat.shape)
 
 
-num_people = 10
-num_days = 2
-num_shifts = 4
-abridged = pref_mat[0:num_people, 0:num_days, 0:num_shifts]
+# num_people = 10
+# num_days = 20
+# num_shifts = 4
+# abridged = pref_mat[0:num_people, 0:num_days, 0:num_shifts]
 
-print(abridged.shape)
-print(abridged)
+# print(abridged.shape)
+# print(abridged)
 
-solve_schedule(preference_matrix=abridged, num_people=num_people, num_shifts=num_shifts, num_days=num_days)
+solve_schedule(preference_matrix=pref_mat, shift_matrix=day_mat, num_people=pref_mat.shape[0], num_shifts=pref_mat.shape[2], num_days=num_days)
