@@ -13,7 +13,6 @@ def get_max_shifts(shifts):
     A = bool(shifts[0]); B = bool(shifts[1]); C = bool(shifts[2]); D = bool(shifts[3])
     out1 = int(C & B | A & D | A & B | C & D)
     out2 = int(A & (~D) & (~B) | (~B) & (~D) & C | D & (~C) & (~A) | (~A) & B & (~C))
-    print(out1, out2)
     # convert to decimal
     max_shift = out1 * 2**1 + out2 * 2**0
 
@@ -45,8 +44,9 @@ def solve_schedule(preference_matrix, shift_matrix, num_people, num_shifts, num_
             valid = preference_matrix[0, d, s] > -2
             if valid:
                 model.Add(sum(shifts[(p, d, s)] for p in peop_range) == people_per_shift)
-            else:
-                model.Add(sum(shifts[(p, d, s)] for p in peop_range) == 0)
+            # else:
+            #     print(preference_matrix[0, d, s])
+            #     model.Add(sum(shifts[(p, d, s)] for p in peop_range) < 1)
 
     # Each person works at most shifts_per_day, shifts per day.
     # TODO: all multiple shift per day cases
@@ -77,8 +77,11 @@ def solve_schedule(preference_matrix, shift_matrix, num_people, num_shifts, num_
     for p in peop_range:
         for d in day_range:
             shifts_per_day = get_max_shifts(shift_matrix[d])
-            print(shift_matrix[d], shifts_per_day)
             model.Add(sum(shifts[(p, d, s)] for s in shift_range) <= shifts_per_day)
+            
+            # Still need a boolean relation between 
+            # model.AddBoolXOr([shifts[(p, d, 0)], shifts[(p, d, 2)]])
+            # model.AddBoolXOr([shifts[(p, d, 1)], shifts[(p, d, 3)]])
 
     # Try to distribute the shifts evenly, so that each nurse works
     # min_shifts_per_nurse shifts. If this is not possible, because the total
@@ -107,26 +110,28 @@ def solve_schedule(preference_matrix, shift_matrix, num_people, num_shifts, num_
     # Creates the solver and solve.
     solver = cp_model.CpSolver()
     solver.Solve(model)
+   
+    print(solver.StatusName())
 
-    for d in day_range:
-        print('Day', d)
-        for p in peop_range:
-            for s in shift_range:
-                print(p, d, s)
-                breakpoint()
-                if solver.Value(shifts[(p, d, s)]) == 1:
-                    if preference_matrix[p][d][s] >= 1:
-                        print('Nurse', p, 'works shift', s, '(requested).')
-                    else:
-                        print('Nurse', p, 'works shift', s, '(not requested).')
+    if (solver.StatusName() != "INFEASIBLE"):
+        for d in day_range:
+            print('Day', d)
+            for p in peop_range:
+                for s in shift_range:
+                    if solver.Value(shifts[(p, d, s)]) == 1 and preference_matrix[p][d][s] > -2:
+                        if preference_matrix[p][d][s] >= 1:
+                            print('Nurse', p, 'works shift', s, '(requested).')
+                        else:
+                            print('Nurse', p, 'works shift', s, '(not requested).', preference_matrix[p][d][s])
+            print()
+
+        # Statistics.
         print()
-
-    # Statistics.
-    print()
-    print('Statistics')
-    print('  - Number of shift requests met = %i' % solver.ObjectiveValue(),
-          '(out of', num_people * min_shifts_per_person, ')')
-    print('  - wall time       : %f s' % solver.WallTime())
+        print('Statistics')
+        print('  - Number of shift requests met = %i' % solver.ObjectiveValue(),
+            '(out of', num_people * min_shifts_per_person, ')')
+        print('  - wall time       : %f s' % solver.WallTime())
+    
 
 
 processor = ScheduleInputProcessor(
