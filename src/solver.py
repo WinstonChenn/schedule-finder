@@ -36,7 +36,9 @@ def solve_schedule(preference_matrix, shift_matrix, num_people, num_shifts, num_
     for p in peop_range:
         for d in day_range:
             for s in shift_range:
-                shifts[(p, d, s)] = model.NewBoolVar('shift_p%id%is%i' % (p, d, s))
+                valid = preference_matrix[0, d, s] > -2
+                if valid:
+                    shifts[(p, d, s)] = model.NewBoolVar('shift_p%id%is%i' % (p, d, s))
 
     # Each shift has people_per_shift people.
     people_per_shift = 1
@@ -45,8 +47,6 @@ def solve_schedule(preference_matrix, shift_matrix, num_people, num_shifts, num_
             valid = preference_matrix[0, d, s] > -2
             if valid:
                 model.Add(sum(shifts[(p, d, s)] for p in peop_range) == people_per_shift)
-            else:
-                model.Add(sum(shifts[(p, d, s)] for p in peop_range) == 0)
 
     # Each person works at most shifts_per_day, shifts per day.
     # TODO: all multiple shift per day cases
@@ -78,7 +78,12 @@ def solve_schedule(preference_matrix, shift_matrix, num_people, num_shifts, num_
         for d in day_range:
             shifts_per_day = get_max_shifts(shift_matrix[d])
             print(shift_matrix[d], shifts_per_day)
-            model.Add(sum(shifts[(p, d, s)] for s in shift_range) <= shifts_per_day)
+            shift_array = []
+            for s in shift_range:
+                valid = preference_matrix[0, d, s] > -2
+                if valid:
+                    shift_array.append(shifts[(p, d, s)])
+            model.Add(sum(shift_array) <= shifts_per_day)
 
     # Try to distribute the shifts evenly, so that each nurse works
     # min_shifts_per_nurse shifts. If this is not possible, because the total
@@ -96,7 +101,9 @@ def solve_schedule(preference_matrix, shift_matrix, num_people, num_shifts, num_
         num_shifts_worked = 0
         for d in day_range:
             for s in shift_range:
-                num_shifts_worked += shifts[(p, d, s)]
+                valid = preference_matrix[0, d, s] > -2
+                if valid:
+                    num_shifts_worked += shifts[(p, d, s)]
         model.Add(min_shifts_per_person <= num_shifts_worked)
         model.Add(num_shifts_worked <= max_shifts_per_person)
 
@@ -112,13 +119,14 @@ def solve_schedule(preference_matrix, shift_matrix, num_people, num_shifts, num_
         print('Day', d)
         for p in peop_range:
             for s in shift_range:
-                print(p, d, s)
-                breakpoint()
-                if solver.Value(shifts[(p, d, s)]) == 1:
-                    if preference_matrix[p][d][s] >= 1:
-                        print('Nurse', p, 'works shift', s, '(requested).')
-                    else:
-                        print('Nurse', p, 'works shift', s, '(not requested).')
+                valid = preference_matrix[0, d, s] > -2
+                if valid:
+                    print(p, d, s)
+                    if solver.Value(shifts[(p, d, s)]) == 1:
+                        if preference_matrix[p][d][s] >= 1:
+                            print('Nurse', p, 'works shift', s, '(requested).')
+                        else:
+                            print('Nurse', p, 'works shift', s, '(not requested).')
         print()
 
     # Statistics.
