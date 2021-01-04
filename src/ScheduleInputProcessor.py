@@ -31,7 +31,7 @@ class ScheduleInputProcessor:
                  date_requirement_url, staff_requirement_url, holidays):
         self.start_date = datetime.datetime.strptime(start_date, "%m/%d/%y")
         self.end_date = datetime.datetime.strptime(end_date, "%m/%d/%y")
-        self.days = (self.end_date - self.start_date).days
+        self.days = (self.end_date - self.start_date).days + 1
         self.max_shifts = max_shifts
         self.num_staff = num_staff
         self.date_requirement_url = date_requirement_url
