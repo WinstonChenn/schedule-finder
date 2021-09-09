@@ -44,6 +44,7 @@ class ScheduleSolver():
         total_primary_shifts = total_primary_shifts // self.num_people
         total_secondary_shifts = total_secondary_shifts // self.num_people
         total_daytime_shifts = total_daytime_shifts // self.num_people
+        total_shifts = total_primary_shifts + total_secondary_shifts + total_daytime_shifts
         print("Total Primary Shifts: %i" % total_primary_shifts)
         print("Total Secondary Shifts: %i" % total_secondary_shifts)
         print("Total Daytime Shifts: %i" % total_daytime_shifts)
@@ -61,17 +62,7 @@ class ScheduleSolver():
                 if bool(self.shift_mat[d, 0]) and bool(self.shift_mat[d, 1]):
                     model.Add((shifts[(p, d, 0)]+shifts[(p, d, 1)]) <= 1)
 
-                # for s in shift_range:
-                    # if bool(self.shift_mat[d, s]):
-                        # XOR condition for 0 (primary shift) and 1 (secondary shift)
-                        # if (bool(self.shift_mat[d, 1]) and bool(self.shift_mat[d, 3])):
-                        #     model.Add(sum([shifts[(p, d, 1)], shifts[(p, d, 3)]]) <= 1)
-
-    # Distribute the shifts evenly
-    # Each staff works min_shifts_per_nurse shifts.
-    # If this is not possible, because the total number of shifts
-    # is not divisible by the number of nurses, some staff will
-    # be assigned one more shift.
+        # Distribute the primary/secondary/daytime shifts evenly
         min_primary_shifts_per_person = total_primary_shifts // self.num_people
         if total_primary_shifts % self.num_people == 0:
             max_primary_shifts_per_person = min_primary_shifts_per_person
@@ -121,22 +112,23 @@ class ScheduleSolver():
             model.Maximize(sum(bool_array))
             # Creates the solver and solve.
             solver = cp_model.CpSolver()
-            solver.parameters.max_time_in_seconds = 10.0
+            solver.parameters.max_time_in_seconds = 60.0
             print("solving")
             solver.Solve(model)
             print("solved")
         
             print(solver.StatusName())
+            req_met = 0
             if (solver.StatusName() != "INFEASIBLE"):
                 for d in day_range:
                     print('Day', d)
                     for p in peop_range:
                         for s in shift_range:
-                            valid = bool(self.shift_mat[d, s])
-                            if valid:
+                            if bool(self.shift_mat[d, s]):
                                 if solver.Value(shifts[(p, d, s)]) == 1:
-                                    if self.pref_mat[p][d][s] >= 1:
+                                    if self.pref_mat[p][d][s] > 1:
                                         print('Staff', p, 'works shift', s, '(requested).')
+                                        req_met += 1
                                     else:
                                         print('Staff', p, 'works shift', s, '(not requested).')
             
@@ -144,10 +136,10 @@ class ScheduleSolver():
 
                 # Statistics.
                 print()
-                print('Statistics')
-                print('  - Number of shift requests met = %i' % solver.ObjectiveValue(),)
-                    # '(out of', self.num_people * min_shifts_per_person, ')')
-                print('  - wall time       : %f s' % solver.WallTime())
+                print('Statistics:')
+                print(f" - total objective value: {solver.ObjectiveValue()}")
+                print(f" - Number of shift requests met = {req_met} out of {total_shifts}" )
+                print(f" - wall time =  {solver.WallTime()}s")
 
                 return solver, shifts
 
