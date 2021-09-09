@@ -25,10 +25,10 @@ class AdvancedSchedulePrinter():
             6: "Sunday"
         }
         self.shift_type_swithcer = {
-            0: "Building Night Time Shift",
-            1: "Building Day Time Shift",
-            2: "ISO/Conf Night Time Shift",
-            3: "ISO/Conf Day Time Shift",
+            0: "Building Night Time Primary Shift",
+            1: "Building Night Time Secondary Shift",
+            2: "Building Day Time Shift",
+            3: "Place Holder",
         }
 
     def print_schedule(self):

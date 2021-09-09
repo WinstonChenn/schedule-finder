@@ -69,11 +69,12 @@ def solve_schedule(preference_matrix, shift_matrix, num_people, num_shifts, num_
                 shifts[(p, d, s)] = model.NewBoolVar('shift_p%id%is%i' % (p, d, s))
 
     total_shifts = total_shifts // num_people
+    print(total_shifts)
     # Each shift has people_per_shift people.
     people_per_shift = 1
     for d in day_range:
         for s in shift_range:
-            valid = preference_matrix[0, d, s] > -2
+            valid = bool(shift_matrix[d, s])
             if valid:
                 model.Add(sum(shifts[(p, d, s)] for p in peop_range) == people_per_shift)
             else:
@@ -193,7 +194,6 @@ pref_mat = processor.get_preference_matrix()
 num_days = (datetime.datetime.strptime("3/12/21", "%m/%d/%y") - datetime.datetime.strptime("1/3/21", "%m/%d/%y")).days + 1
 dates, shifts, day_mat = processor.load_day_requirements()
 
-breakpoint()
 solve_schedule(
     preference_matrix=pref_mat,
     shift_matrix=day_mat,

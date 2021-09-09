@@ -16,7 +16,9 @@ class ScheduleSolver():
         peop_range = range(self.num_people)
         day_range = range(self.num_days)
         shift_range = range(self.num_shifts)
-        total_shifts = 0
+        total_primary_shifts = 0
+        total_secondary_shifts = 0
+        total_daytime_shifts = 0
 
         # pref_matrix should go [people][days][shifts]
         if(not self.pref_mat.shape == (self.num_people, self.num_days, self.num_shifts) and
@@ -30,98 +32,126 @@ class ScheduleSolver():
         for p in peop_range:
             for d in day_range:
                 for s in shift_range:
-                    valid = bool(self.shift_mat[d, s])
-                    if valid:
-                        total_shifts += 1
-                    shifts[(p, d, s)] = model.NewBoolVar('shift_p%id%is%i' % (p, d, s))
+                    if bool(self.shift_mat[d, s]):
+                        if s == 0:
+                            total_primary_shifts += 1
+                        elif s == 1:
+                            total_secondary_shifts += 1
+                        elif s == 2:
+                            total_daytime_shifts += 1
+                        shifts[(p, d, s)] = model.NewBoolVar('shift_p%id%is%i' % (p, d, s))
 
-        total_shifts = total_shifts // self.num_people
+        total_primary_shifts = total_primary_shifts // self.num_people
+        total_secondary_shifts = total_secondary_shifts // self.num_people
+        total_daytime_shifts = total_daytime_shifts // self.num_people
+        print("Total Primary Shifts: %i" % total_primary_shifts)
+        print("Total Secondary Shifts: %i" % total_secondary_shifts)
+        print("Total Daytime Shifts: %i" % total_daytime_shifts)
+
         # Each shift has people_per_shift people.
         people_per_shift = 1
         for d in day_range:
             for s in shift_range:
-                valid = bool(self.shift_mat[d, s])
-                if valid:
+                if bool(self.shift_mat[d, s]):
                     model.Add(sum(shifts[(p, d, s)] for p in peop_range) == people_per_shift)
-                else:
-                    model.Add(sum(shifts[(p, d, s)] for p in peop_range) == 0)
 
+        # no both primary and secondary shifts at the same day
         for p in peop_range:
             for d in day_range:
-                shifts_per_day = self.get_max_shifts(self.shift_mat[d])
-                shift_array = []
-                for s in shift_range:
-                    valid = bool(self.shift_mat[d, s])
-                    if valid:
-                        shift_array.append(shifts[(p, d, s)])
-                # XOR condition for 0, 2 (both night time shift) and 1, 3 (both day time shift)
-                if (bool(self.shift_mat[d, 0]) and bool(self.shift_mat[d, 2])):
-                    model.Add(sum([shifts[(p, d, 0)], shifts[(p, d, 2)]]) <= 1)
-                if (bool(self.shift_mat[d, 1]) and bool(self.shift_mat[d, 3])):
-                    model.Add(sum([shifts[(p, d, 1)], shifts[(p, d, 3)]]) <= 1)
-                model.Add(sum(shift_array) <= shifts_per_day)
+                if bool(self.shift_mat[d, 0]) and bool(self.shift_mat[d, 1]):
+                    model.Add((shifts[(p, d, 0)]+shifts[(p, d, 1)]) <= 1)
+
+                # for s in shift_range:
+                    # if bool(self.shift_mat[d, s]):
+                        # XOR condition for 0 (primary shift) and 1 (secondary shift)
+                        # if (bool(self.shift_mat[d, 1]) and bool(self.shift_mat[d, 3])):
+                        #     model.Add(sum([shifts[(p, d, 1)], shifts[(p, d, 3)]]) <= 1)
 
     # Distribute the shifts evenly
     # Each staff works min_shifts_per_nurse shifts.
     # If this is not possible, because the total number of shifts
     # is not divisible by the number of nurses, some staff will
     # be assigned one more shift.
-        min_shifts_per_person = total_shifts // self.num_people
-        if total_shifts % self.num_people == 0:
-            max_shifts_per_person = min_shifts_per_person
+        min_primary_shifts_per_person = total_primary_shifts // self.num_people
+        if total_primary_shifts % self.num_people == 0:
+            max_primary_shifts_per_person = min_primary_shifts_per_person
         else:
-            max_shifts_per_person = min_shifts_per_person + 1
+            max_primary_shifts_per_person = min_primary_shifts_per_person + 1
+        min_secondary_shifts_per_person = total_secondary_shifts // self.num_people
+        if total_secondary_shifts % self.num_people == 0:
+            max_secondary_shifts_per_person = min_secondary_shifts_per_person
+        else:
+            max_secondary_shifts_per_person = min_secondary_shifts_per_person + 1
+        min_daytime_shifts_per_person = total_daytime_shifts // self.num_people
+        if total_daytime_shifts % self.num_people == 0:
+            max_daytime_shifts_per_person = min_daytime_shifts_per_person
+        else:
+            max_daytime_shifts_per_person = min_daytime_shifts_per_person + 1
 
         # apply min_shifts_per_person and max_shifts_per_person constrains
         for p in peop_range:
-            num_shifts_worked = 0
+            num_primary_shifts_worked = 0
+            num_secondary_shifts_worked = 0
+            num_daytime_shifts_worked = 0
             for d in day_range:
                 for s in shift_range:
                     valid = bool(self.shift_mat[d, s])
                     if valid:
-                        num_shifts_worked += shifts[(p, d, s)]
-            model.Add(min_shifts_per_person <= num_shifts_worked)
-            model.Add(num_shifts_worked <= max_shifts_per_person)
+                        if s == 0:
+                            num_primary_shifts_worked += shifts[(p, d, s)]
+                        elif s == 1:
+                            num_secondary_shifts_worked += shifts[(p, d, s)]
+                        elif s == 2:
+                            num_daytime_shifts_worked += shifts[(p, d, s)]
+            model.Add(min_primary_shifts_per_person <= num_primary_shifts_worked)
+            model.Add(num_primary_shifts_worked <= max_primary_shifts_per_person)
+            model.Add(min_secondary_shifts_per_person <= num_secondary_shifts_worked)
+            model.Add(num_secondary_shifts_worked <= max_secondary_shifts_per_person)
+            model.Add(min_daytime_shifts_per_person <= num_daytime_shifts_worked)
+            model.Add(num_daytime_shifts_worked <= max_daytime_shifts_per_person)
         
             bool_array = []
             for p in peop_range:
                 for d in day_range:
                     for s in shift_range:
-                        valid = bool(self.shift_mat[d, s])
-                        if valid:
+                        if bool(self.shift_mat[d, s]):
                             bool_array.append(int(self.pref_mat[p][d][s]) * shifts[(p, d, s)])
             # accomondate request
+            
             model.Maximize(sum(bool_array))
             # Creates the solver and solve.
             solver = cp_model.CpSolver()
+            solver.parameters.max_time_in_seconds = 10.0
             print("solving")
             solver.Solve(model)
             print("solved")
         
             print(solver.StatusName())
             if (solver.StatusName() != "INFEASIBLE"):
-                # for d in day_range:
-                #     print('Day', d)
-                #     for p in peop_range:
-                #         for s in shift_range:
-                #             valid = self.shift_mat[d, s] > -2
-                #             if valid:
-                #                 if solver.Value(shifts[(p, d, s)]) == 1:
-                #                     if preference_matrix[p][d][s] >= 1:
-                #                         print('Staff', p, 'works shift', s, '(requested).')
-                #                     else:
-                #                         print('Staff', p, 'works shift', s, '(not requested).')
+                for d in day_range:
+                    print('Day', d)
+                    for p in peop_range:
+                        for s in shift_range:
+                            valid = bool(self.shift_mat[d, s])
+                            if valid:
+                                if solver.Value(shifts[(p, d, s)]) == 1:
+                                    if self.pref_mat[p][d][s] >= 1:
+                                        print('Staff', p, 'works shift', s, '(requested).')
+                                    else:
+                                        print('Staff', p, 'works shift', s, '(not requested).')
             
-                #     print()
+                    print()
 
-                # # Statistics.
-                # print()
-                # print('Statistics')
-                # print('  - Number of shift requests met = %i' % solver.ObjectiveValue(),
-                #     '(out of', num_people * min_shifts_per_person, ')')
-                # print('  - wall time       : %f s' % solver.WallTime())
+                # Statistics.
+                print()
+                print('Statistics')
+                print('  - Number of shift requests met = %i' % solver.ObjectiveValue(),)
+                    # '(out of', self.num_people * min_shifts_per_person, ')')
+                print('  - wall time       : %f s' % solver.WallTime())
 
                 return solver, shifts
+
+
 
 
     # given the binary setting for 4 shifts, solve maximum
