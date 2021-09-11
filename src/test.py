@@ -1,10 +1,10 @@
 from ortools.sat.python import cp_model
-from SchedulePrinter import SchedulePrinter
+from solver.SchedulePrinter import SchedulePrinter
 import numpy as np
 
-num_people = 4
-num_shifts = 3
-num_days = 3
+num_people = 10
+num_shifts = 2
+num_days = 70
 
 all_people = range(num_people)
 all_shifts = range(num_shifts)
@@ -23,11 +23,7 @@ for p in all_people:
 for d in all_days:
     for s in all_shifts:
         model.Add(sum(shifts[(p, d, s)] for p in all_people) == 1)
-        # if s == 0:
-        # if weekend:
-        # sum shift 1 == 1
-        # if iso:
-        # sum shift 2 == 1
+
 for d in all_days:
     for p in all_people:
         model.Add(sum(shifts[(p, d, s)] for s in all_shifts) <= 1)
@@ -37,7 +33,6 @@ if num_shifts * num_days % num_people == 0:
     max_shifts_per_people = min_shifts_per_people
 else:
     max_shifts_per_people = min_shifts_per_people + 1
-
 
 for p in all_people:
     num_shifts_worked = 0
@@ -60,7 +55,27 @@ solution_printer = SchedulePrinter(
     a_few_solutions
 )
 
-solver.SearchForAllSolutions(model, solution_printer)
+# solver.SearchForAllSolutions(model, solution_printer)
+# staff_dict = {i:0 for i in all_people}
+# for p in all_people:
+#     for d in all_days:
+#         for s in all_shifts:
+#             if solver.Value(shifts[(p, d, s)]):
+#                 staff_dict[p] += 1
+
+solver.parameters.max_time_in_seconds = 10.0
+solver.Solve(model)
+print("solving...")
+print(solver.StatusName())
+req_met = 0
+staff_dict = {i: 0 for i in all_people}
+if (solver.StatusName() != "INFEASIBLE"):
+    for p in all_people:
+        for d in all_days:
+            for s in all_shifts:
+                if solver.Value(shifts[(p, d, s)]):
+                    staff_dict[p] += 1
+print(staff_dict)
 
 print()
 print('Statistics')
@@ -68,3 +83,5 @@ print('  - conflicts       : %i' % solver.NumConflicts())
 print('  - branches        : %i' % solver.NumBranches())
 print('  - wall time       : %f s' % solver.WallTime())
 print('  - solutions found : %i' % solution_printer.solution_count())
+
+print(staff_dict)
