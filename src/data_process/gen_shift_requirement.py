@@ -10,7 +10,13 @@ def main(args):
     for i in range(delta.days + 1):
         day = start_date + timedelta(days=i)
         date_str_arr.append(day.strftime(args.date_format))
-    columns = ["date"] + [f"Shift {i+1}" for i in range(args.num_shifts)]
+    if args.num_shifts == 2:
+        shift_arr = ["Primary Shift", "Secondary Shift"]
+    elif args.num_shifts == 3:
+        shift_arr = ["Primary Shift", "Secondary Shift", "Daytime Shift"]
+    else:
+        shift_arr = [f"Shift {i+1}" for i in range(args.num_shifts)]
+    columns = ["date"] + shift_arr
     data = [[date_str] + [1 for i in range(args.num_shifts)] 
             for date_str in date_str_arr]
     df = pd.DataFrame(data, columns=columns)
