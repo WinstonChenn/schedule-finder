@@ -1,4 +1,5 @@
 import numpy as np
+from datetime import datetime
 
 def get_solution_matrix(solver, shifts, n_days, n_staffs, n_shifts):
     assert len(shifts) == n_days * n_staffs * n_shifts
@@ -10,8 +11,11 @@ def get_solution_matrix(solver, shifts, n_days, n_staffs, n_shifts):
     return solu_mat
 
 
-def print_staff_shedule_stats(solution_mat, pref_mat, staff_arr, shift_arr):
+def print_staff_shedule_stats(
+    solution_mat, pref_mat, staff_arr, date_arr, shift_arr, date_format
+):
     assert solution_mat.shape[0] == len(staff_arr)
+    assert solution_mat.shape[1] == len(date_arr)
     assert solution_mat.shape[2] == len(shift_arr)
 
     want_count = 0
@@ -19,13 +23,17 @@ def print_staff_shedule_stats(solution_mat, pref_mat, staff_arr, shift_arr):
     no_pref_count = 0
     cant_count = 0
     total_count = 0
-    staff_shift_arr = [[0 for _ in range(len(shift_arr))] for _ in range(len(staff_arr))]
+    staff_shift_arr = [[{"Weekend": 0, "Weekday": 0}for _ in range(len(shift_arr))] for _ in range(len(staff_arr))]
+    total_shift_arr = [0 for _ in range(len(staff_arr))]
     for p in range(solution_mat.shape[0]):
         for d in range(solution_mat.shape[1]):
             for s in range(solution_mat.shape[2]):
                 if solution_mat[p, d, s] == 1:
                     total_count += 1
-                    staff_shift_arr[p][s] += 1
+                    total_shift_arr[p] += 1
+                    week_of_day_idx = datetime.strptime(date_arr[d], date_format).weekday()
+                    shift_type = "Weekend" if week_of_day_idx==4 or week_of_day_idx==5 else "Weekday"
+                    staff_shift_arr[p][s][shift_type] += 1
                     if pref_mat[p][d][s] > 1:
                         want_count += 1
                     elif pref_mat[p][d][s] == 1:
@@ -36,13 +44,12 @@ def print_staff_shedule_stats(solution_mat, pref_mat, staff_arr, shift_arr):
                         cant_count += 1
     print("Staff shift taking statistics: ")
     for p in range(len(staff_arr)):
-        print(
-            f"{staff_arr[p]}: " + 
-            " ".join([
-                f"#{shift_arr[s]}={staff_shift_arr[p][s]}" 
-                for s in range(len(shift_arr))
-            ])
-        )
+        print(f"{staff_arr[p]}: ")
+        print(f"\t#Total Shifts={total_shift_arr[p]}")
+        for s in range(len(shift_arr)):
+            for key in staff_shift_arr[p][s]:
+                print(f"\t#{key} {shift_arr[s]}={staff_shift_arr[p][s][key]}")
+        print()
     print(f" - Number of wanted shifts requests met: {want_count}")
     print(f" - Number of OK shifts met: {ok_count}")
     print(f" - Number of no preference shifts met: {no_pref_count}")

@@ -1,3 +1,10 @@
 {
-    "Niem Vo": ["Friday"]   
+    "Niem Vo": {"Friday": ["Primary", "Secondary"]},
+    "Vivian Yu": {"09/18/21": ["Primary"], "09/19/21": ["Primary"]},
+    "Alexander Betz ": {"09/18/21": ["Primary"], "09/19/21": ["Primary"]},
+    "Natalie O'Rourke": {"09/18/21": ["Primary"], "09/19/21": ["Primary"]},
+    "Justyna Swierz": {"09/18/21": ["Primary"], "09/19/21": ["Primary"]},
+    "Tran Nguyen": {"09/18/21": ["Primary"], "09/19/21": ["Primary"]},
+    "Jasmine Matchawate": {"09/18/21": ["Primary"], "09/19/21": ["Primary"]},
+    "Noah Williams": {"09/18/21": ["Primary"], "09/19/21": ["Primary"]}
 }

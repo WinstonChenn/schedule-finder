@@ -1,6 +1,7 @@
 import argparse, os
 from datetime import datetime
 import numpy as np
+import pandas as pd
 from ScheduleSolver import ScheduleSolver
 from ScheduleInputProcessor import ScheduleInputProcessor
 from utils import get_solution_matrix, print_staff_shedule_stats
@@ -29,6 +30,7 @@ def main(args):
     max_shifts = schedule_processor.get_max_shifts()
     num_staffs = schedule_processor.get_num_staffs()
     staff_arr = schedule_processor.get_staff_arr()
+    date_arr = schedule_processor.get_date_arr()
     shift_arr = schedule_processor.get_shift_arr()
     pref_mat = schedule_processor.get_preference_matrix()
     print("Start schedule finding: ")
@@ -41,12 +43,12 @@ def main(args):
     solution_dir = os.path.join(data_dir, "solutions")
     if not os.path.exists(solution_dir):
         os.makedirs(solution_dir)
-    solution_url = os.path.join(
+    solution_matrix_url = os.path.join(
         solution_dir,
-        "schedule_solution_numStaffs{}_numDays{}_numShifts{}_maxTime{}.npy"
+        "schedule_solution_matrix_numStaffs{}_numDays{}_numShifts{}_maxTime{}.npy"
         .format(num_staffs, num_days, max_shifts, args.max_time)
     )
-    if not os.path.isfile(solution_url):
+    if not os.path.isfile(solution_matrix_url):
         num_days = (datetime.strptime(end_date, args.date_format) -
                     datetime.strptime(start_date, args.date_format)).days + 1
         dates, shifts, shift_mat = schedule_processor.load_day_requirements()
@@ -54,6 +56,8 @@ def main(args):
         schedule_solver = ScheduleSolver(
             preference_matrix=pref_mat,
             shift_matrix=shift_mat,
+            date_arr=date_arr,
+            date_format=args.date_format,
             max_time=args.max_time,
         )
         solver, shifts = schedule_solver.solve_schedule()
@@ -62,15 +66,40 @@ def main(args):
             print(f" - wall time =  {solver.WallTime()}s")
             solution_matrix = get_solution_matrix(
                 solver, shifts, num_days, num_staffs, max_shifts)
-            np.save(solution_url, solution_matrix)
-            print("Solution matrix saved to {}".format(solution_url))
+            np.save(solution_matrix_url, solution_matrix)
+            print("Solution matrix saved to {}".format(solution_matrix_url))
         else:
             print("No feasible solution found!")
             exit(1)
     else:
-        print("Solution matrix already exists at {}".format(solution_url))
-        solution_matrix = np.load(solution_url)
-    print_staff_shedule_stats(solution_matrix, pref_mat, staff_arr, shift_arr)
+        print("Solution matrix already exists at {}".format(solution_matrix_url))
+        solution_matrix = np.load(solution_matrix_url)
+    print_staff_shedule_stats(
+        solution_matrix, pref_mat, staff_arr, date_arr, shift_arr, args.date_format
+    )
+    solution_excel_url = os.path.join(
+        solution_dir,
+        "schedule_solution_excel_numStaffs{}_numDays{}_numShifts{}_maxTime{}.xlsx"
+        .format(num_staffs, num_days, max_shifts, args.max_time)
+    )
+    shift_dict = {"Shift": [], "Full Name": [], "On-Call Date": [], "Day of Week": [], "Type": []}
+    day_of_week_arr = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    for date_idx, date in enumerate(date_arr):
+        for shift_idx, shift in enumerate(shift_arr):
+            shift_mat = solution_matrix[:, date_idx, shift_idx]
+            assert sum(shift_mat) == 1, \
+                f"More or less than 1 shift is scheduled for {date} {shift}"
+            shift_dict["Shift"].append(shift)
+            shift_dict["Full Name"].append(staff_arr[np.argmax(shift_mat)])
+            shift_dict["On-Call Date"].append(date)
+            week_of_day_idx = datetime.strptime(date, args.date_format).weekday()
+            shift_type = "Weekend" if week_of_day_idx==4 or week_of_day_idx==5 else "Weekday"
+            shift_dict["Day of Week"].append(day_of_week_arr[week_of_day_idx])
+            shift_dict["Type"].append(shift_type)
+    shift_df = pd.DataFrame.from_dict(shift_dict)
+    df_writer = pd.ExcelWriter(solution_excel_url, datetime_format=args.date_format)
+    shift_df.to_excel(df_writer,index=False)
+    df_writer.save()
 
 
 if __name__ == "__main__":

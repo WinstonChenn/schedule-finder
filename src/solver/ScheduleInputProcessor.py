@@ -52,21 +52,29 @@ class ScheduleInputProcessor:
             col if type(col) == str else col.strftime(self.date_format) 
             for col in self.staff_req_df.columns
         ])
-        self.additional_staff_req_arr = [[] for _ in range(len(self.get_staff_arr()))]
+        self.additional_staff_req_arr = [{} for _ in range(len(self.get_staff_arr()))]
         if os.path.isfile(additional_staff_requirement_url):
             self.additional_staff_req_dict = json.load(open(additional_staff_requirement_url))
             staff_names = list(self.additional_staff_req_dict.keys())
             for staff_name in staff_names:
                 assert staff_name in self.get_staff_arr()
                 staff_idx = self.get_staff_arr().index(staff_name)
-                for date in self.additional_staff_req_dict[staff_name]:
-                    assert date in self.day_of_week or self.validate_date_str(date)
+                curr_additional_staff_dict = self.additional_staff_req_dict[staff_name]
+                for date in curr_additional_staff_dict.keys():
+                    assert date in self.day_of_week or \
+                        (self.validate_date_str(date) and date in self.all_date_arr)
+                    assert all([shift in self.get_shift_arr() 
+                                for shift in curr_additional_staff_dict[date]])
+                    shift_idx_arr = [self.get_shift_arr().index(shift) 
+                                     for shift in curr_additional_staff_dict[date]]
                     if date in self.day_of_week:
                         for idx, date_str in enumerate(self.all_date_arr):
                             weekday_idx = datetime.strptime(date_str, self.date_format).weekday()
                             if self.day_of_week[weekday_idx] == date:
-                                self.additional_staff_req_arr[staff_idx].append(idx)
-
+                                self.additional_staff_req_arr[staff_idx][idx]=shift_idx_arr
+                    else:
+                        idx = self.all_date_arr.index(date)
+                        self.additional_staff_req_arr[staff_idx][idx]=shift_idx_arr
     def stringfy_column_dates(self, df):
         col_rename_dic = {}
         for col_name in df.columns:
@@ -119,7 +127,9 @@ class ScheduleInputProcessor:
             additional_pref_setting = self.additional_staff_req_arr[people_idx]
             for date_idx in range(self.get_num_days()):
                 for shift_idx in range(self.get_max_shifts()):
-                    if (not shift_mat[date_idx, shift_idx]) or date_idx in additional_pref_setting:
+                    if (not shift_mat[date_idx, shift_idx]) or \
+                        (date_idx in additional_pref_setting.keys() and 
+                         shift_idx in additional_pref_setting[date_idx]):
                         # set to -2 when no shift exist
                         pref_mat[people_idx, date_idx, shift_idx] = -2
                     else:
@@ -174,6 +184,9 @@ class ScheduleInputProcessor:
     def get_staff_arr(self):
         return self.staff_req_df['people'].tolist()
     
+    def get_date_arr(self):
+        return self.shift_req_df['date'].tolist()
+
     def get_shift_arr(self):
         return self.shift_req_df.loc[:, self.shift_req_df.columns != "date"] \
             .columns.tolist()
@@ -184,8 +197,10 @@ class ScheduleInputProcessor:
         except AttributeError:
             return {}
 
-    def validate_date_str(date_text):
+    def validate_date_str(self, date_text):
         try:
-            datetime.datetime.strptime(date_text, self.date_format)
+            datetime.strptime(date_text, self.date_format)
+            return True
         except ValueError:
-            raise ValueError(f"Incorrect data format, should be {self.date_format}")
+            # raise ValueError(f"Incorrect data format, should be {self.date_format}")
+            return False
