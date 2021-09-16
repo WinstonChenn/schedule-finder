@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from datetime import datetime
 
 def get_solution_matrix(solver, shifts, n_days, n_staffs, n_shifts):
@@ -7,7 +8,10 @@ def get_solution_matrix(solver, shifts, n_days, n_staffs, n_shifts):
     for p in range(n_staffs):
         for d in range(n_days):
             for s in range(n_shifts):
-                solu_mat[p, d, s] = solver.Value(shifts[p, d, s])
+                try:
+                    solu_mat[p, d, s] = solver.Value(shifts[p, d, s])
+                except:
+                    breakpoint()
     return solu_mat
 
 
@@ -41,20 +45,31 @@ def print_staff_shedule_stats(
                     elif pref_mat[p][d][s] == 0:
                         no_pref_count += 1
                     elif pref_mat[p][d][s] < 0:
+                        print(date_arr[d], shift_arr[s], staff_arr[p])
                         cant_count += 1
+
+    shift_stat_dict = {"RA": []}
+    for day_of_week in ["Weekday", "Weekend"]:
+        for shift_type in shift_arr:
+            shift_stat_dict[f"{day_of_week} - {shift_type}"] = []
+    shift_stat_dict["Total Shifts"] = []
     print("Staff shift taking statistics: ")
-    for p in range(len(staff_arr)):
-        print(f"{staff_arr[p]}: ")
+    for p, staff in enumerate(staff_arr):
+        print(f"{staff}: ")
         print(f"\t#Total Shifts={total_shift_arr[p]}")
+        shift_stat_dict["RA"].append(staff)
+        shift_stat_dict["Total Shifts"].append(total_shift_arr[p])
         for s in range(len(shift_arr)):
             for key in staff_shift_arr[p][s]:
                 print(f"\t#{key} {shift_arr[s]}={staff_shift_arr[p][s][key]}")
+                shift_stat_dict[f"{key} - {shift_arr[s]}"].append(staff_shift_arr[p][s][key])
         print()
     print(f" - Number of wanted shifts requests met: {want_count}")
     print(f" - Number of OK shifts met: {ok_count}")
     print(f" - Number of no preference shifts met: {no_pref_count}")
     print(f" - Number of cant shifts met: {cant_count}")
     print(f" - Total number of shifts {total_count}")
+    return pd.DataFrame.from_dict(shift_stat_dict)
 
 
 # given the binary setting for 4 shifts, solve maximum

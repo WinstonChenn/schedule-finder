@@ -76,6 +76,8 @@ class ScheduleSolver():
         min_total_shifts = total_shifts // self.num_people
         if total_shifts % self.num_people == 0:
             max_total_shifts = min_total_shifts
+        else:
+            max_total_shifts = min_total_shifts + 1
         print(" - Min Shift Per Person: {}".format(min_total_shifts))
         print(" - Max Shift Per Person: {}".format(max_total_shifts))
         print()

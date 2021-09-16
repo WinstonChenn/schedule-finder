@@ -18,8 +18,12 @@ def get_dates_arr(date_str, input_date_format, output_date_format):
         start_date = end_date = date_str.strip()
     start_date = datetime.strptime(start_date, input_date_format) \
         .replace(year=datetime.today().year).date()
-    end_date = (datetime.strptime(end_date, input_date_format)-timedelta(days=1)) \
-        .replace(year=datetime.today().year).date()
+    if " - " not in date_str:
+        end_date = (datetime.strptime(end_date, input_date_format)) \
+            .replace(year=datetime.today().year).date()
+    else:
+        end_date = (datetime.strptime(end_date, input_date_format)-timedelta(days=1)) \
+            .replace(year=datetime.today().year).date()
     date_range = pd.date_range(start_date,end_date,freq='d')
     date_str_arr = [date.strftime(output_date_format) for date in date_range]
     return date_str_arr

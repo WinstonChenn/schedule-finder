@@ -28,7 +28,8 @@ import os, json
 
 class ScheduleInputProcessor:
     def __init__(self, shift_requirement_url, staff_requirement_url, 
-                 additional_staff_requirement_url, holidays, date_format="%m/%d/%y"):
+                 additional_staff_requirement_url, holidays, exclude_dates,
+                 date_format="%m/%d/%y"):
         self.date_format = date_format
         self.shift_requirement_url = shift_requirement_url
         self.staff_requirement_url = staff_requirement_url
@@ -43,8 +44,16 @@ class ScheduleInputProcessor:
             self.staff_requirement_url, converters={'names':str,'ages':str}
         )
         self.staff_req_df = self.stringfy_column_dates(self.staff_req_df)
+        for date in exclude_dates:
+            if date in self.staff_req_df.columns:
+                self.staff_req_df.drop(columns=date, inplace=True)
         self.all_date_arr = self.shift_req_df['date'].tolist()
+        for date in self.staff_req_df.columns:
+            if self.validate_date_str(date) and date not in self.all_date_arr:
+                print(date)
+                self.staff_req_df.drop(columns=date, inplace=True)
         self.weekend_arr = list(filter(self.is_weekend, self.all_date_arr))
+        self.exclude_dates = exclude_dates
 
         # data varification
         assert len(self.staff_req_df.columns)-1 == (5+len(self.weekend_arr)+len(self.holidays))
@@ -129,14 +138,17 @@ class ScheduleInputProcessor:
                 for shift_idx in range(self.get_max_shifts()):
                     if (not shift_mat[date_idx, shift_idx]) or \
                         (date_idx in additional_pref_setting.keys() and 
-                         shift_idx in additional_pref_setting[date_idx]):
+                            shift_idx in additional_pref_setting[date_idx]):
                         # set to -2 when no shift exist
                         pref_mat[people_idx, date_idx, shift_idx] = -2
                     else:
                         # set staff preference
                         date_str = dates[date_idx]
                         if date_str in self.holidays or date_str in self.weekend_arr:
-                            pref_mat_idx = req_dates.index(date_str)
+                            try:
+                                pref_mat_idx = req_dates.index(date_str)
+                            except:
+                                breakpoint()
                         else:
                             pref_mat_idx = req_dates.index(self.get_weekday_str(date_str))
                         assert pref_mat_idx > -1
@@ -164,7 +176,7 @@ class ScheduleInputProcessor:
             self.num_days = len(self.all_date_arr)
             start_date = datetime.strptime(self.get_start_date(), self.date_format)
             end_date = datetime.strptime(self.get_end_date(), self.date_format)
-            assert self.num_days == (end_date-start_date).days + 1
+            assert self.num_days == (end_date-start_date).days + 1 - len(self.exclude_dates)
             return self.num_days
 
     def get_max_shifts(self):
@@ -185,7 +197,7 @@ class ScheduleInputProcessor:
         return self.staff_req_df['people'].tolist()
     
     def get_date_arr(self):
-        return self.shift_req_df['date'].tolist()
+        return self.all_date_arr
 
     def get_shift_arr(self):
         return self.shift_req_df.loc[:, self.shift_req_df.columns != "date"] \

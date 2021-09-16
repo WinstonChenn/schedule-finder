@@ -9,11 +9,13 @@ def main(args):
     date_str_arr = []
     for i in range(delta.days + 1):
         day = start_date + timedelta(days=i)
-        date_str_arr.append(day.strftime(args.date_format))
+        date_str = day.strftime(args.date_format)
+        if not date_str in args.excluding_dates:
+            date_str_arr.append(date_str)
     if args.num_shifts == 2:
-        shift_arr = ["Primary Shift", "Secondary Shift"]
+        shift_arr = ["Primary", "Secondary"]
     elif args.num_shifts == 3:
-        shift_arr = ["Primary Shift", "Secondary Shift", "Daytime Shift"]
+        shift_arr = ["Primary", "Secondary", "Daytime"]
     else:
         shift_arr = [f"Shift {i+1}" for i in range(args.num_shifts)]
     columns = ["date"] + shift_arr
@@ -62,6 +64,13 @@ if __name__ == "__main__" :
         type=int,
         help="number of shifts per day",
         default=2
+    )
+    parser.add_argument(
+        "--excluding_dates",
+        type=str,
+        nargs='+',
+        help="dates to exclude from shift requirement, format: mm/dd/yy",
+        default=[]
     )
     args = parser.parse_args()
     main(args)
