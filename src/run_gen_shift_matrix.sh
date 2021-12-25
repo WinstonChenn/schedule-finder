@@ -1,0 +1,12 @@
+python gen_shift_matrix.py \
+    --data_dir "../data" \
+    --data_name "elm_winter_2022" \
+    --date_format "%m/%d/%y" \
+    --start_date "1/2/22" \
+    --end_date "3/10/22" \
+    --max_num_shifts 3 \
+    --shifts_names "Primary" "Secondary" "Daytime" \
+    --weekday_num_shifts 2 \
+    --weekend_num_shifts 3 \
+    --special_weekdays "1/2/22" \
+    --overwrite
