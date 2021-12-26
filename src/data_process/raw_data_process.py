@@ -49,13 +49,14 @@ class RawPreferenceProcessorInterface(metaclass=abc.ABCMeta):
 class ElmWinter2022PreferenceProcessor(RawPreferenceProcessorInterface):
     def __init__(
         self, file_path: str, shift_mat_df: pd.DataFrame,
-        date_format: str = "%m/%d/%y"
+        holidays: list, date_format: str = "%m/%d/%y"
     ):
         self.file_path = file_path
         self.staff_pref_df = pd.read_excel(self.file_path)
 
         self.shift_mat_df = shift_mat_df
         self.date_list = shift_mat_df['date'].tolist()
+        self.holidays = holidays
         self.shifts_names = shift_mat_df.columns.tolist()
         self.shifts_names.remove('date')
         self.date_format = date_format
@@ -71,7 +72,14 @@ class ElmWinter2022PreferenceProcessor(RawPreferenceProcessorInterface):
         if shift_name == "Daytime":
             assert  is_saturday_sunday(date_str, self.date_format), \
                 "Daytime shift is only available on Saturday and Sunday"
-        if is_friday(date_str):
+        if contain_same_day(date_str, self.holidays, self.date_format):
+            if date_str == "01/17/22":
+                column_name = "Holiday on-call preferences [1/17 Martin Luther King Jr. Day]"
+            elif date_str == "02/21/22":
+                column_name = "Holiday on-call preferences [2/21 Presidents' Day]"
+            else:
+                raise ValueError("Invalid holiday date")
+        elif is_friday(date_str):
             curr_date = datetime.strptime(date_str, self.date_format)
             curr_date_str = datetime.strftime(curr_date, "%-m/%-d")
             next_date = curr_date + timedelta(days=1)

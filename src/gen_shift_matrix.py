@@ -80,6 +80,5 @@ if __name__ == "__main__":
     )
     get_shift_req_args(parser)
 
-
     args = parser.parse_args()
     get_shift_matrix(args)

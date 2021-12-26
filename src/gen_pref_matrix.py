@@ -21,7 +21,7 @@ def main(args):
     shift_mat_df = get_shift_matrix(args)
     processor = ElmWinter2022PreferenceProcessor(
         raw_data_url, shift_mat_df=shift_mat_df,
-        date_format=args.date_format
+        date_format=args.date_format, holidays=args.holidays
     )
     staff_names = processor.get_staff_names()
     staff_pref_matrices = {}
