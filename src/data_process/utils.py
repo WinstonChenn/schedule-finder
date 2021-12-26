@@ -31,6 +31,33 @@ def is_weekend(date_str, date_format="%m/%d/%y"):
     date = datetime.strptime(date_str, date_format).date()
     return date.weekday() >= 5
 
+def is_friday(date_str, date_format="%m/%d/%y"):
+    """
+    Return True if the date is Friday.
+    """
+    date = datetime.strptime(date_str, date_format).date()
+    return date.weekday() == 4
+
+def is_saturday(date_str, date_format="%m/%d/%y"):
+    """
+    Return True if the date is Saturday.
+    """
+    date = datetime.strptime(date_str, date_format).date()
+    return date.weekday() == 5
+
+def is_sunday(date_str, date_format="%m/%d/%y"):
+    """
+    Return True if the date is Sunday.
+    """
+    date = datetime.strptime(date_str, date_format).date()
+    return date.weekday() == 6
+
+def is_saturday_sunday(date_str, date_format="%m/%d/%y"):
+    """
+    Return True if the date is Saturday or Sunday.
+    """
+    return is_saturday(date_str, date_format) or is_sunday(date_str, date_format)
+
 def is_same_day(date_str1, date_str2, date_format="%m/%d/%y"):
     """
     Return True if the two dates are the same.
@@ -38,6 +65,18 @@ def is_same_day(date_str1, date_str2, date_format="%m/%d/%y"):
     date1 = datetime.strptime(date_str1, date_format).date()
     date2 = datetime.strptime(date_str2, date_format).date()
     return date1 == date2
+
+def get_day_of_week_str(date_str, date_format="%m/%d/%y"):
+    """
+    Return day of week string of a date string.
+    """
+    day_of_week_list = [
+        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", 
+        "Saturday", "Sunday"
+    ]
+    date = datetime.strptime(date_str, date_format).date()
+    return day_of_week_list[date.weekday()]
+
 
 def contain_same_day(date_str, date_str_arr, date_format="%m/%d/%y"):
     """

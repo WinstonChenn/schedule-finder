@@ -4,7 +4,7 @@ from data_process.utils import get_date_arr, validate_datestr, \
                                is_weekend, is_same_day, contain_same_day
 from common_args import get_shift_req_args
 
-def main(args):
+def get_shift_matrix(args):
 
     data_dir = os.path.join(args.data_dir, args.data_name)
     if not os.path.exists(data_dir):
@@ -13,7 +13,7 @@ def main(args):
     if os.path.exists(data_url) and not args.overwrite:
         print(f"Shift matrix already exists at: {data_url} "
               f"use --overwrite to overwrite")
-        return
+        return pd.read_excel(data_url)
 
     # Validating all the date string inputs
     assert validate_datestr(args.start_date, args.date_format), \
@@ -78,12 +78,8 @@ if __name__ == "__main__":
         "--date_format", type=str, help="format string for start/end date",
         default="%m/%d/%y"
     )
-    parser.add_argument(
-        "--overwrite", action="store_true",
-        help="overwrite existing shift matrix"
-    )
     get_shift_req_args(parser)
 
 
     args = parser.parse_args()
-    main(args)
+    get_shift_matrix(args)
