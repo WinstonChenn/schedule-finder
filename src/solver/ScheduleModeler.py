@@ -7,10 +7,12 @@ from data_process.utils import is_friday_saturday
 
 class ScheduleModeler():
     def __init__(self, shift_mat_df: pd.DataFrame, staff_list: list, 
-                 date_format: str, pref_mat_dict: dict=None):
+                 date_format: str, pref_mat_dict: dict=None, 
+                 max_consecutive_dict: dict=None):
         self.shift_mat_df = shift_mat_df
         self.shift_mat = shift_mat_df.loc[:, shift_mat_df.columns!="date"].to_numpy()
         self.pref_mat_dict = pref_mat_dict
+        self.max_consecutive_dict = max_consecutive_dict
         self.date_list = self.shift_mat_df['date'].tolist()
         self.shift_list = self.shift_mat_df.columns.tolist()
         self.shift_list.remove('date')
@@ -49,10 +51,14 @@ class ScheduleModeler():
                 else:
                     model.Add(sum(shifts[(p, d, s)] for p in peop_range) == 1)
 
-        # Each staff only takes at most 1 shift per day.
-        for d in day_range:
-            for p in peop_range:
+        # Each staff can't take primary or secondary on the same day.
+        for p in peop_range:
+            for d in day_range:
                 model.Add(sum(shifts[(p, d, s)] for s in shift_range) <= 1)
+                # model.Add(sum([shifts[(p, d, 0)],shifts[(p, d, 1)]])  <= 1)
+                # model.Add(sum([shifts[(p, d, 0)],shifts[(p, d, 2)]]) <= 2)
+                # model.Add(sum([shifts[(p, d, 1)],shifts[(p, d, 2)]]) <= 2)
+                # model.AddBoolXOr([shifts[(p, d, 0)], shifts[(p, d, 1)]])
         
         # Evenly distribute all shifts
         print("Shifts distributing statistics:")
@@ -84,7 +90,7 @@ class ScheduleModeler():
 
         # applying min-max shift number constraints
         for p in peop_range:
-            shifts_worked_arr = [{key: 0 for key in min_max_shifts_arr[0]}for _ in shift_range]
+            shifts_worked_arr = [{key: 0 for key in min_max_shifts_arr[0]} for _ in shift_range]
             total_shifts_worked = 0
             for d in day_range:
                 for s in shift_range:
@@ -117,6 +123,18 @@ class ScheduleModeler():
                         else:
                             bool_array.append(int(curr_pref_mat[d][s]) * shifts[(p, d, s)])
             model.Maximize(sum(bool_array))
+
+        if self.max_consecutive_dict is not None:
+            for p in peop_range:
+                staff = self.staff_list[p]
+                max_cons_shifts = self.max_consecutive_dict[staff]
+                for d in range(self.num_days - max_cons_shifts):
+                    shift_arr = []
+                    for i in range(max_cons_shifts+1):
+                        for s in shift_range:
+                            curr_shift = shifts[(p, d + i, s)]
+                            shift_arr.append(curr_shift)
+                    model.Add(sum(shift_arr) <= max_cons_shifts)
 
         return model, shifts
 

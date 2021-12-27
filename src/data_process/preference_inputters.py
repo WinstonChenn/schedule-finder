@@ -102,3 +102,9 @@ class ElmWinter2022PreferenceInputer(PreferenceInputterInterface):
                 else:
                     pref_mat[i, j] = -2
         return pref_mat
+
+    def get_staff_max_consecutive_shifts(self, staff: str) -> int:
+        return self.staff_pref_df.loc[
+            self.staff_pref_df["Name"]==staff, 
+            "Maximum acceptable number of back-to-back on-call "
+        ].values[0]

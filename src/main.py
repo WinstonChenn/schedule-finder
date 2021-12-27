@@ -20,26 +20,33 @@ def main(args):
     assert os.path.isfile(raw_data_url), \
         f"Raw preference file: {raw_data_url} not found"
 
+    # Input shift requirements
     shift_mat_df = get_shift_matrix(args)
     date_list = shift_mat_df["date"].tolist()
     shift_list = list(filter(
         lambda x: x != "date", shift_mat_df.columns.tolist()
     ))
+
+    # Input Staff preferences
     processor = ElmWinter2022PreferenceInputer(
         raw_data_url, shift_mat_df=shift_mat_df,
         date_format=args.date_format, holidays=args.holidays
     )
     staff_names = processor.get_staff_names()
     staff_pref_matrices = {}
+    staff_max_consecutive_dict = {}
     for staff_name in staff_names:
         pref_matrix = processor.get_staff_pref_matrix(staff_name)
+        max_consecutive = processor.get_staff_max_consecutive_shifts(staff_name)
         staff_pref_matrices[staff_name] = pref_matrix
+        staff_max_consecutive_dict[staff_name] = max_consecutive
 
     modeler = ScheduleModeler(
         shift_mat_df=shift_mat_df, 
         pref_mat_dict=staff_pref_matrices,
         staff_list=staff_names, 
-        date_format=args.date_format
+        date_format=args.date_format,
+        max_consecutive_dict=staff_max_consecutive_dict,
     )
     schedule_model, shift_vars = modeler.get_model()
 
@@ -62,23 +69,26 @@ def main(args):
             shift_list=shift_list, date_format=args.date_format,
             pref_mat_dict=staff_pref_matrices
         )
-        stats_df = schedule_outputter.print_schedule_stats()
+        stats_df = schedule_outputter.get_schedule_stats(verbose=False)
         schedule_df = schedule_outputter.get_schedule_df()
+        print("Solution Schedule Stats:")
+        print(stats_df)
         
 
         solution_dir = os.path.join(data_dir, "solutions")
         if not os.path.exists(solution_dir):
             os.makedirs(solution_dir)
         solution_excel_url = os.path.join(solution_dir, args.solution_file_name)
+        states_excel_url = os.path.join(solution_dir, "states.xlsx")
         
         df_writer = pd.ExcelWriter(solution_excel_url, datetime_format=args.date_format)
         schedule_df.to_excel(df_writer,index=False)
         df_writer.save()
         print("Schedule saved to {}".format(solution_excel_url))
-        # df_writer = pd.ExcelWriter(solution_stats_url, datetime_format=args.date_format)
-        # stats_df.to_excel(df_writer,index=False)
-        # df_writer.save()
-        # print("Schedule stats saved to {}".format(solution_stats_url))
+        df_writer = pd.ExcelWriter(states_excel_url, datetime_format=args.date_format)
+        stats_df.to_excel(df_writer,index=False)
+        df_writer.save()
+        print("Schedule stats saved to {}".format(states_excel_url))
 
 
     

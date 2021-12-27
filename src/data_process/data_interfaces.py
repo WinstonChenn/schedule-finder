@@ -46,15 +46,15 @@ class ScheduleOutputterInterface(metaclass=abc.ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
         return (
-            hasattr(subclass, 'print_schedule_stats') and \
-            callable(subclass.print_schedule_stats) and \
+            hasattr(subclass, 'get_schedule_df') and \
+            callable(subclass.get_schedule_df) and \
             hasattr(subclass, "get_schedule_df") and \
             callable(subclass.get_schedule_df) or \
             NotImplemented
         )
 
     @abc.abstractmethod
-    def print_schedule_stats(self) -> None:
+    def get_schedule_df(self) -> None:
         """
         Print the per staff stats of the generated schedule.
         """

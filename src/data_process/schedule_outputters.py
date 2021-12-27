@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from ortools.sat.python import cp_model
 from .data_interfaces import ScheduleOutputterInterface
-from .utils import is_friday_saturday
+from .utils import is_friday_saturday, get_max_consecutive_len
 
 class ElmScheduleOutputter(ScheduleOutputterInterface):
     def __init__(self, solver: cp_model.CpSolver, 
@@ -21,17 +21,16 @@ class ElmScheduleOutputter(ScheduleOutputterInterface):
         self.pref_mat_dict = pref_mat_dict
         self.date_format = date_format
     
-    def print_schedule_stats(self) -> pd.DataFrame:
+    def get_schedule_stats(self, verbose=True) -> pd.DataFrame:
         solution_mat = self.get_schedule_matrix()
         assert solution_mat.shape[0] == self.num_people
         assert solution_mat.shape[1] == self.num_days
         assert solution_mat.shape[2] == self.num_shifts
 
-        want_count = 0
-        ok_count = 0
-        no_pref_count = 0
-        cant_count = 0
-        total_count = 0
+        staff_count_arr = [{
+            "want_count": 0, "ok_count": 0, 
+            "no_pref_count": 0, "cant_count": 0, 
+        } for _ in range(self.num_people)]
         staff_shift_arr = [
             [{"Weekend": 0, "Weekday": 0} for _ in range(self.num_shifts)]
         for _ in range(self.num_people)]
@@ -41,7 +40,6 @@ class ElmScheduleOutputter(ScheduleOutputterInterface):
             for d in range(solution_mat.shape[1]):
                 for s in range(solution_mat.shape[2]):
                     if solution_mat[p, d, s] == 1:
-                        total_count += 1
                         total_shift_arr[p] += 1
                         if is_friday_saturday(self.date_list[d], self.date_format):
                             shift_type = "Weekend"  
@@ -49,36 +47,55 @@ class ElmScheduleOutputter(ScheduleOutputterInterface):
                             shift_type = "Weekday"
                         staff_shift_arr[p][s][shift_type] += 1
                         if self.pref_mat_dict[staff][d][s] > 1:
-                            want_count += 1
+                            staff_count_arr[p]["want_count"] += 1
                         elif self.pref_mat_dict[staff][d][s] == 1:
-                            ok_count += 1
+                            staff_count_arr[p]["ok_count"] += 1
                         elif self.pref_mat_dict[staff][d][s] == 0:
-                            no_pref_count += 1
+                            staff_count_arr[p]["no_pref_count"] += 1
                         elif self.pref_mat_dict[staff][d][s] < 0:
                             print(self.date_list[d], self.shift_list[s], self.staff_list[p], self.pref_mat_dict[staff][d][s])
-                            cant_count += 1
+                            staff_count_arr[p]["cant_count"] += 1
 
         shift_stat_dict = {"RA": []}
         for day_of_week in ["Weekday", "Weekend"]:
             for shift_type in self.shift_list:
                 shift_stat_dict[f"{day_of_week} - {shift_type}"] = []
         shift_stat_dict["Total Shifts"] = []
-        print("Staff shift taking statistics: ")
+        shift_stat_dict["Max Consecutive Shifts"] = []
+        for key in staff_count_arr[0]:
+            shift_stat_dict[key] = []
+        shift_stat_dict
+        if verbose:
+            print("Staff shift taking statistics: ")
         for p, staff in enumerate(self.staff_list):
-            print(f"{staff}: ")
-            print(f"\t#Total Shifts={total_shift_arr[p]}")
+            if verbose:
+                print(f"{staff}: ")
+                print(f"\t#Total Shifts={total_shift_arr[p]}")
             shift_stat_dict["RA"].append(staff)
             shift_stat_dict["Total Shifts"].append(total_shift_arr[p])
+
+            # Shift type statistics
             for s in range(len(self.shift_list)):
                 for key in staff_shift_arr[p][s]:
-                    print(f"\t#{key} {self.shift_list[s]}={staff_shift_arr[p][s][key]}")
+                    if verbose:
+                        print(f"\t#{key} {self.shift_list[s]}={staff_shift_arr[p][s][key]}")
                     shift_stat_dict[f"{key} - {self.shift_list[s]}"].append(staff_shift_arr[p][s][key])
-            print()
-        print(f" - Number of wanted shifts requests met: {want_count}")
-        print(f" - Number of OK shifts met: {ok_count}")
-        print(f" - Number of no preference shifts met: {no_pref_count}")
-        print(f" - Number of cant shifts met: {cant_count}")
-        print(f" - Total number of shifts {total_count}")
+            # Staff preference statistics
+            for key in staff_count_arr[p]:
+                if verbose:
+                    print(f"\t#{key}={staff_count_arr[p][key]}")
+                shift_stat_dict[key].append(staff_count_arr[p][key])
+
+            # Get max consecutive shifts
+            curr_solu_mat = solution_mat[p, :, :]
+            reduced_curr_solu_mat = curr_solu_mat[:, 0]
+            for i in range(1, curr_solu_mat.shape[1]):
+                reduced_curr_solu_mat += curr_solu_mat[:, i]
+            reduced_curr_solu_mat = np.minimum(reduced_curr_solu_mat, 1.0)
+            max_consecutive = get_max_consecutive_len(reduced_curr_solu_mat)
+            shift_stat_dict["Max Consecutive Shifts"].append(max_consecutive)
+            if verbose:
+                print()
         return pd.DataFrame.from_dict(shift_stat_dict)
 
     def get_schedule_matrix(self) -> np.ndarray:

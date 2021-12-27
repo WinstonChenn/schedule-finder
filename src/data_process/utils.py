@@ -119,3 +119,19 @@ def keep_trail_bracket_str(s) -> str:
     assert left_idx != -1 and right_idx != -1, "Invalid brackets string"
     assert right_idx > left_idx, "Invalid brackets string"
     return s[left_idx+1: right_idx]
+
+
+def get_max_consecutive_len(arr):
+    count = 0
+    result = 0
+ 
+    for val in arr:
+        if (val == 0):
+            count = 0
+        elif (val == 1):
+            count+= 1
+            result = max(result, count)
+        else:
+            raise Exception("arr contain non-0/1 values")
+         
+    return result
