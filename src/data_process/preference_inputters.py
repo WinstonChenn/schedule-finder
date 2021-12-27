@@ -1,52 +1,12 @@
-import abc
-from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
+from datetime import datetime, timedelta
+from .data_interfaces import PreferenceInputterInterface
 from .utils import is_saturday, is_sunday, keep_trail_parentheses_num, \
     keep_trail_bracket_str, contain_same_day, is_weekend, \
     validate_datestr, is_saturday_sunday, is_friday, get_day_of_week_str
 
-class RawPreferenceProcessorInterface(metaclass=abc.ABCMeta):
-    @classmethod
-    def __subclasshook__(cls, subclass):
-        return (
-            hasattr(subclass, 'get_staff_name') and \
-            callable(subclass.get_staff_name) and \
-            hasattr(subclass, "get_staff_pref_matrix") and \
-            callable(subclass.get_staff_pref_matrix) or \
-            NotImplemented
-        )
-            
-
-    @abc.abstractmethod
-    def get_staff_names(self) -> list:
-        """
-        Return a list of staff names from raw data table.
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def shift_to_column_name(self, date_str: str, shift_name) -> str:
-        """
-        Map a given shift to the corresponding column name in the raw data table.
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def parse_preference_string(self, value: str) -> float:
-        """
-        Parse a preference string to return the preference value
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_staff_pref_matrix(self, staff: str) -> np.ndarray:
-        """
-        Return the preference matrix for a given staff.
-        """
-        raise NotImplementedError
-
-class ElmWinter2022PreferenceProcessor(RawPreferenceProcessorInterface):
+class ElmWinter2022PreferenceInputer(PreferenceInputterInterface):
     def __init__(
         self, file_path: str, shift_mat_df: pd.DataFrame,
         holidays: list, date_format: str = "%m/%d/%y"
@@ -134,6 +94,11 @@ class ElmWinter2022PreferenceProcessor(RawPreferenceProcessorInterface):
                 if has_shift:
                     shift_col_name = self.shift_to_column_name(date, shift)
                     pref_str = self.staff_pref_df.loc[self.staff_pref_df["Name"]==staff, shift_col_name].values[0]
-                    pref_value = self.parse_preference_string(pref_str)
+                    try:
+                        pref_value = self.parse_preference_string(pref_str)
+                    except:
+                        pref_value = 0
                     pref_mat[i, j] = pref_value
+                else:
+                    pref_mat[i, j] = -2
         return pref_mat

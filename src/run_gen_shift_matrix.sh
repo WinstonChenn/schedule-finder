@@ -9,4 +9,5 @@ python gen_shift_matrix.py \
     --weekday_num_shifts 2 \
     --weekend_num_shifts 3 \
     --special_weekdays "1/2/22" \
+    --holidays "1/17/22" "2/21/22" \
     --overwrite

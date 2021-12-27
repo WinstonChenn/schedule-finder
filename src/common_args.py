@@ -40,4 +40,13 @@ def get_shift_req_args(parser):
         help="weekdays that should be consiedered as weekends, format: mm/dd/yy",
         default=[]
     )
+    parser.add_argument(
+        "--holidays", type=str, nargs='+',
+        help="holidays, format: mm/dd/yy",
+        default=[]
+    )
+    parser.add_argument(
+        "--overwrite", action="store_true",
+        help="overwrite existing shift matrix"
+    )
     return parser

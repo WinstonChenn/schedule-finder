@@ -3,7 +3,6 @@ import pandas as pd
 from datetime import datetime
 
 def get_solution_matrix(solver, shifts, n_days, n_staffs, n_shifts):
-    assert len(shifts) == n_days * n_staffs * n_shifts
     solu_mat = np.zeros((n_staffs, n_days, n_shifts))
     for p in range(n_staffs):
         for d in range(n_days):
@@ -11,12 +10,12 @@ def get_solution_matrix(solver, shifts, n_days, n_staffs, n_shifts):
                 try:
                     solu_mat[p, d, s] = solver.Value(shifts[p, d, s])
                 except:
-                    breakpoint()
+                    solu_mat[p, d, s] = 0
     return solu_mat
 
 
 def print_staff_shedule_stats(
-    solution_mat, pref_mat, staff_arr, date_arr, shift_arr, date_format
+    solution_mat, pref_mat_dict, staff_arr, date_arr, shift_arr, date_format
 ):
     assert solution_mat.shape[0] == len(staff_arr)
     assert solution_mat.shape[1] == len(date_arr)
@@ -30,6 +29,7 @@ def print_staff_shedule_stats(
     staff_shift_arr = [[{"Weekend": 0, "Weekday": 0}for _ in range(len(shift_arr))] for _ in range(len(staff_arr))]
     total_shift_arr = [0 for _ in range(len(staff_arr))]
     for p in range(solution_mat.shape[0]):
+        staff = staff_arr[p]
         for d in range(solution_mat.shape[1]):
             for s in range(solution_mat.shape[2]):
                 if solution_mat[p, d, s] == 1:
@@ -38,13 +38,13 @@ def print_staff_shedule_stats(
                     week_of_day_idx = datetime.strptime(date_arr[d], date_format).weekday()
                     shift_type = "Weekend" if week_of_day_idx==4 or week_of_day_idx==5 else "Weekday"
                     staff_shift_arr[p][s][shift_type] += 1
-                    if pref_mat[p][d][s] > 1:
+                    if pref_mat_dict[staff][d][s] > 1:
                         want_count += 1
-                    elif pref_mat[p][d][s] == 1:
+                    elif pref_mat_dict[staff][d][s] == 1:
                         ok_count += 1
-                    elif pref_mat[p][d][s] == 0:
+                    elif pref_mat_dict[staff][d][s] == 0:
                         no_pref_count += 1
-                    elif pref_mat[p][d][s] < 0:
+                    elif pref_mat_dict[staff][d][s] < 0:
                         print(date_arr[d], shift_arr[s], staff_arr[p])
                         cant_count += 1
 

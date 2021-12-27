@@ -1,4 +1,4 @@
-python gen_pref_matrix.py \
+python main.py \
     --data_dir "../data" \
     --data_name "elm_winter_2022" \
     --date_format "%m/%d/%y" \
@@ -9,4 +9,6 @@ python gen_pref_matrix.py \
     --weekday_num_shifts 2 \
     --weekend_num_shifts 3 \
     --special_weekdays "1/2/22" \
-    --raw_pref_file_name "Winter Quarter on-call schedule preference.xlsx"
+    --holidays "1/17/22" "2/21/22" \
+    --raw_pref_file_name "Winter Quarter on-call schedule preference (Responses).xlsx" \
+    --max_solve_time 20

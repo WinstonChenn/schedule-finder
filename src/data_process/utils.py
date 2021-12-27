@@ -52,6 +52,12 @@ def is_sunday(date_str, date_format="%m/%d/%y"):
     date = datetime.strptime(date_str, date_format).date()
     return date.weekday() == 6
 
+def is_friday_saturday(date_str, date_format="%m/%d/%y"):
+    """
+    Return True if the date is Friday or Saturday.
+    """
+    return is_friday(date_str, date_format) or is_saturday(date_str, date_format)
+
 def is_saturday_sunday(date_str, date_format="%m/%d/%y"):
     """
     Return True if the date is Saturday or Sunday.
