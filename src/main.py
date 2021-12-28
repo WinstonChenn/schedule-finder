@@ -70,8 +70,10 @@ def main(args):
             solver=solver, shift_vars=shift_vars, 
             date_list=date_list, staff_list=staff_names, 
             shift_list=shift_list, date_format=args.date_format,
-            pref_mat_dict=staff_pref_matrices
+            pref_mat_dict=staff_pref_matrices, 
+            staff_unavailable_days_json=unavailable_day_url
         )
+        schedule_outputter.verify_schedule()
         stats_df = schedule_outputter.get_schedule_stats(verbose=False)
         schedule_df = schedule_outputter.get_schedule_df()
         print("Solution Schedule Stats:")

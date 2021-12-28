@@ -1,15 +1,18 @@
+import json
 import numpy as np
 import pandas as pd
 from datetime import datetime
 from ortools.sat.python import cp_model
 from .data_interfaces import ScheduleOutputterInterface
-from .utils import is_friday_saturday, get_max_consecutive_len
+from .utils import is_friday_saturday, get_max_consecutive_len, \
+                   get_day_of_week_str
 
 class ElmScheduleOutputter(ScheduleOutputterInterface):
     def __init__(self, solver: cp_model.CpSolver, 
                  shift_vars: dict, date_list: list, 
                  staff_list: list, shift_list: list, 
-                 date_format: str, pref_mat_dict: dict=None) -> None:
+                 date_format: str, pref_mat_dict: dict,
+                 staff_unavailable_days_json: str=None) -> None:
         self.solver = solver
         self.shift_vars = shift_vars
         self.date_list = date_list
@@ -20,12 +23,13 @@ class ElmScheduleOutputter(ScheduleOutputterInterface):
         self.num_shifts = len(self.shift_list)
         self.pref_mat_dict = pref_mat_dict
         self.date_format = date_format
+        if staff_unavailable_days_json is not None:
+            self.staff_unavailable_days_dict = json.load(open(staff_unavailable_days_json))
+        else:
+            self.staff_unavailable_days_dict = {}
     
     def get_schedule_stats(self, verbose=True) -> pd.DataFrame:
         solution_mat = self.get_schedule_matrix()
-        assert solution_mat.shape[0] == self.num_people
-        assert solution_mat.shape[1] == self.num_days
-        assert solution_mat.shape[2] == self.num_shifts
 
         staff_count_arr = [{
             "want_count": 0, "ok_count": 0, 
@@ -98,6 +102,11 @@ class ElmScheduleOutputter(ScheduleOutputterInterface):
                 print()
         return pd.DataFrame.from_dict(shift_stat_dict)
 
+    def _verify_schedule_matrix(self, solution_mat) -> None:
+        assert solution_mat.shape[0] == self.num_people
+        assert solution_mat.shape[1] == self.num_days
+        assert solution_mat.shape[2] == self.num_shifts
+    
     def get_schedule_matrix(self) -> np.ndarray:
         solu_mat = np.zeros((self.num_people, self.num_days, self.num_shifts))
         for p in range(self.num_people):
@@ -107,6 +116,7 @@ class ElmScheduleOutputter(ScheduleOutputterInterface):
                         solu_mat[p, d, s] = self.solver.Value(self.shift_vars[p, d, s])
                     except:
                         solu_mat[p, d, s] = 0
+        self._verify_schedule_matrix(solu_mat)
         return solu_mat
 
     def get_schedule_df(self) -> pd.DataFrame:
@@ -136,4 +146,58 @@ class ElmScheduleOutputter(ScheduleOutputterInterface):
                     shift_dict["Type"].append(shift_type)
         shift_df = pd.DataFrame.from_dict(shift_dict)
         return shift_df
+
+    def _verify_primary_secondary(self, solution_mat):
+        """
+        Verify that for the same day, primary shift and secondary shifts 
+        are not the same staff
+        """
+        for d in range(self.num_days):
+            curr_mat = solution_mat[:, d, :]
+            assert np.argmax(curr_mat[:, 0]) != np.argmax(curr_mat[:, 1]), \
+                f"Primary and secondary shifts in the same day ({self.date_list[d]}) "\
+                f"are scheduled to the same staff"
+
+    def _verify_one_staff_per_shift(self, solution_mat):
+        """
+        Verify that for each shift, there is only one staff assigned to it
+        """
+        for d in range(self.num_days):
+            for s in range(self.num_shifts):
+                curr_mat = solution_mat[:, d, s]
+                assert sum(curr_mat) <= 1, \
+                    f"More than 1 staff is scheduled for " \
+                    f"{self.date_list[d]} {self.shift_list[s]}"
+
+    def _verify_unavaialble_dates(self, solution_mat):
+        for staff in self.staff_unavailable_days_dict:
+            staff_idx = self.staff_list.index(staff)
+            for d, date in enumerate(self.date_list):
+                day_of_week = get_day_of_week_str(date, self.date_format)
+                if day_of_week in self.staff_unavailable_days_dict[staff] or \
+                   date in self.staff_unavailable_days_dict[staff]:
+                    try:
+                        unavailable_shift = self.staff_unavailable_days_dict[staff][day_of_week]
+                    except:
+                        unavailable_shift = self.staff_unavailable_days_dict[staff][date]
+                    if unavailable_shift == "ALL":
+                        unavailable_shift = self.shift_list
+                    assert isinstance(unavailable_shift, list), \
+                        f"Unavailable shift for {staff} on {date}/{day_of_week} is not a list"
+                    for s in range(self.num_shifts):
+                        if self.shift_list[s] in unavailable_shift:
+                            assert solution_mat[staff_idx, d, s] == 0, \
+                                f"Staff {staff} is scheduled for {self.date_list[d]} " \
+                                f"{self.shift_list[s]}"
+
+
+    def verify_schedule(self) -> bool:
+        solution_mat = self.get_schedule_matrix()
+        self._verify_primary_secondary(solution_mat)
+        self._verify_one_staff_per_shift(solution_mat)
+        self._verify_unavaialble_dates(solution_mat)
+        self._verify_unavaialble_dates(solution_mat)
+        return True
+
+
 

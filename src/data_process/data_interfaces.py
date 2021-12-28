@@ -49,9 +49,18 @@ class ScheduleOutputterInterface(metaclass=abc.ABCMeta):
             hasattr(subclass, 'get_schedule_df') and \
             callable(subclass.get_schedule_df) and \
             hasattr(subclass, "get_schedule_df") and \
-            callable(subclass.get_schedule_df) or \
+            callable(subclass.get_schedule_df) and \
+            hasattr(subclass, "verify_schedule") and \
+            callable(subclass.verify_schedule) or \
             NotImplemented
         )
+
+    @abc.abstractmethod
+    def verify_schedule(self) -> bool:
+        """
+        Verify the schedule is valid.
+        """
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_schedule_df(self) -> None:
