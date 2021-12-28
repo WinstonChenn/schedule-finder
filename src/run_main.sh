@@ -11,4 +11,5 @@ python main.py \
     --special_weekdays "1/2/22" \
     --holidays "1/17/22" "2/21/22" \
     --raw_pref_file_name "Winter Quarter on-call schedule preference (Responses).xlsx" \
+    --unavailble_day_json_file_name "staff_unavailable_days.json" \
     --max_solve_time 20

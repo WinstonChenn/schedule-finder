@@ -17,8 +17,13 @@ def main(args):
         os.makedirs(data_dir)
     raw_data_dir = os.path.join(data_dir, "raw_data")
     raw_data_url = os.path.join(raw_data_dir, args.raw_pref_file_name)
+    unavailable_day_url = os.path.join(
+        raw_data_dir, args.unavailble_day_json_file_name
+    )
     assert os.path.isfile(raw_data_url), \
         f"Raw preference file: {raw_data_url} not found"
+    assert os.path.isfile(unavailable_day_url), \
+        f"Unavailable day json file: {unavailable_day_url} not found"
 
     # Input shift requirements
     shift_mat_df = get_shift_matrix(args)
@@ -30,7 +35,8 @@ def main(args):
     # Input Staff preferences
     processor = ElmWinter2022PreferenceInputer(
         raw_data_url, shift_mat_df=shift_mat_df,
-        date_format=args.date_format, holidays=args.holidays
+        date_format=args.date_format, holidays=args.holidays, 
+        staff_unavailable_json=unavailable_day_url
     )
     staff_names = processor.get_staff_names()
     staff_pref_matrices = {}
@@ -58,9 +64,6 @@ def main(args):
     print(f"solving... (max time={args.max_solve_time})")
     solver.Solve(schedule_model)
     print(solver.StatusName())
-    print('  - conflicts      : %i' % solver.NumConflicts())
-    print('  - branches       : %i' % solver.NumBranches())
-    print('  - wall time      : %f s' % solver.WallTime())
 
     if solver.StatusName() != "INFEASIBLE":
         schedule_outputter = ElmScheduleOutputter(
@@ -111,6 +114,10 @@ if __name__ == "__main__":
         "--raw_pref_file_name", type=str, help="name of the raw preference file",
         required=True
     )
+    parser.add_argument(
+        "--unavailble_day_json_file_name", type=str,
+        help="name of the json file containing unavailable days for each staff",
+    ),
     parser.add_argument(
         "--max_solve_time", type=int, help="max time in seconds to solve schedule",
         default=10
