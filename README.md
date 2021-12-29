@@ -1,5 +1,7 @@
 # Employees Schedule Finding With Preference
 This repo implements a simple and easy-to-use python scripts that solves the employees scheduling given preference problem.
+
+![schedule](https://raw.githubusercontent.com/WinstonChenn/schedule-finder/main/cartoon.jpeg)
 ## Requirements
 - [Python](https://www.python.org/)
 - [Google Or-Tools](https://developers.google.com/optimization)
