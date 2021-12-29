@@ -2,7 +2,7 @@ import argparse, os
 import pandas as pd
 from data_process.utils import get_date_arr, validate_datestr, \
                                is_weekend, is_same_day, contain_same_day
-from common_args import get_shift_req_args
+from args import get_shift_req_args
 
 def get_shift_matrix(args):
 
