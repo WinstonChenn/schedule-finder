@@ -1,7 +1,7 @@
 import argparse, os
 import pandas as pd
 from ortools.sat.python import cp_model
-from common_args import get_shift_req_args
+from args import get_shift_req_args
 from data_process.utils import get_date_arr, validate_datestr, \
                                is_weekend, is_same_day, contain_same_day
 from data_process.preference_inputters import ElmWinter2022PreferenceInputer
