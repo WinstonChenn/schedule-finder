@@ -137,7 +137,10 @@ class ElmScheduleOutputter(ScheduleOutputterInterface):
                     shift_dict["Title"].append("On-Call Assignment")
                     shift_dict["Shift"].append(shift)
                     shift_dict["Full Name"].append(self.staff_list[np.argmax(shift_mat)])
-                    shift_dict["Building & Role"].append(f"Elm {shift}")
+                    if shift == "Daytime":
+                        shift_dict["Building & Role"].append(f"West Region - Elm")
+                    else:    
+                        shift_dict["Building & Role"].append(f"Elm {shift}")
                     shift_dict["Staff Type"].append("Resident Adviser")
                     shift_dict["On-Call Date"].append(date)
                     week_of_day_idx = datetime.strptime(date, self.date_format).weekday()
