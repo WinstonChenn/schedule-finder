@@ -41,11 +41,6 @@ def get_shift_req_args(parser):
         default=[]
     )
     parser.add_argument(
-        "--holidays", type=str, nargs='+',
-        help="holidays, format: mm/dd/yy",
-        default=[]
-    )
-    parser.add_argument(
         "--overwrite", action="store_true",
         help="overwrite existing shift matrix"
     )

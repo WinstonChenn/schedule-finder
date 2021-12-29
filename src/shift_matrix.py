@@ -72,7 +72,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--data_name", type=str, required=True,
-        help="name of the data to generate shift requirement for",
+        help="name of the data to generate shift matrix for",
     )
     parser.add_argument(
         "--date_format", type=str, help="format string for start/end date",

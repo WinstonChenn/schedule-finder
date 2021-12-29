@@ -1,4 +1,4 @@
-python gen_shift_matrix.py \
+python shift_matrix.py \
     --data_dir "../data" \
     --data_name "elm_winter_2022" \
     --date_format "%m/%d/%y" \

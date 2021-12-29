@@ -6,7 +6,7 @@ from data_process.utils import get_date_arr, validate_datestr, \
                                is_weekend, is_same_day, contain_same_day
 from data_process.preference_inputters import ElmWinter2022PreferenceInputer
 from data_process.schedule_outputters import ElmScheduleOutputter
-from gen_shift_matrix import get_shift_matrix
+from shift_matrix import get_shift_matrix
 from solver.ScheduleModeler import ScheduleModeler
 from solver.utils import get_solution_matrix, print_staff_shedule_stats
 
@@ -127,6 +127,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--solution_file_name", type=str, help="name of the solution file",
         default="solution.xlsx"
+    )
+    parser.add_argument(
+        "--holidays", type=str, nargs='+',
+        help="holidays, format: mm/dd/yy",
+        default=[]
     )
     get_shift_req_args(parser)
 
