@@ -32,8 +32,7 @@ This repo implements a simple and easy-to-use python scripts that solves the emp
 
 3. Modify imports for customized preference inputter and schedule outputter.
     - in the `src/main.py` script, modify following two lines with your own inputter/outputter
-        - https://github.com/WinstonChenn/schedule-finder/blob/b1a1d46aecbcf8b7784a887746280eb6ea9cd1e6/src/main.py#L7
-        - https://github.com/WinstonChenn/schedule-finder/blob/b1a1d46aecbcf8b7784a887746280eb6ea9cd1e6/src/main.py#L8
+        - https://github.com/WinstonChenn/schedule-finder/blob/e7998fe545cc511739a33395b7115dd98b5d4bdf/src/main.py#L7-L8
 
 4. Run `src/main.py` with following flags
     - `--date_format`: the format string used to by `datetime.strptime` to interprete date strings provided in following arguments.
