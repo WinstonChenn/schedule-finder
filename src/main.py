@@ -35,7 +35,7 @@ def main(args):
     # Input Staff preferences
     processor = PreferenceInputer(
         raw_data_url, shift_mat_df=shift_mat_df,
-        date_format=args.date_format, holidays=args.holidays, 
+        date_format=args.date_format, holidays=args.special_weekends, 
         staff_unavailable_json=unavailable_day_url
     )
     staff_names = processor.get_staff_names()
@@ -121,17 +121,12 @@ if __name__ == "__main__":
         help="name of the json file containing unavailable days for each staff",
     ),
     parser.add_argument(
-        "--max_solve_time", type=int, help="max time in seconds to solve schedule",
-        default=10
-    )
-    parser.add_argument(
         "--solution_file_name", type=str, help="name of the solution file",
         default="solution.xlsx"
     )
     parser.add_argument(
-        "--holidays", type=str, nargs='+',
-        help="holidays, format: mm/dd/yy",
-        default=[]
+        "--max_solve_time", type=int, help="max time in seconds to solve schedule",
+        default=10
     )
     get_shift_req_args(parser)
 

@@ -29,28 +29,35 @@ This repo implements a simple and easy-to-use python scripts that solves the emp
     - The schedule outputter objects determines how the solved schedule from google OR-tools' Constrained Programming Solver will be formatted to output to tabular format
     - We provided following interfance `ScheduleOutputterInterface` in `src/data_process/data_interfaces`
     - An example of such schedule outputter class can be found in `src/data_process/schedule_outputters` named `ElmScheduleOutputter`
+    - Following are the required methods for a valid schedule outputter class:
+        - `get_schedule_stats(self) -> pandas.DataFrame`: Print the shift statistics for each staff and return a pandas DataFrame that stores those statistics.
+        - `get_schedule_df(self) -> pandas.DataFrame`: Return the schedule formatted in a pandas DataFrame.
+        - `verify_schedule(self) -> bool`: Verify that the scheudle is valid.
 
 3. Modify imports for customized preference inputter and schedule outputter.
     - in the `src/main.py` script, modify following two lines with your own inputter/outputter
         - https://github.com/WinstonChenn/schedule-finder/blob/e7998fe545cc511739a33395b7115dd98b5d4bdf/src/main.py#L7-L8
 
-4. Run `src/main.py` with following flags
-    - `--date_format`: the format string used to by `datetime.strptime` to interprete date strings provided in following arguments.
-    - `--start_date`: the first date in the schedule matrix (in the formate of `--date_format`).
-    - `--end_date`: the last date in the schedule matrix (in the formate of `--date_format`).
-    - `--excluding_dates`: a list of dates between `--start_date` and `--end_date` that should be excluded from the schedule matrix (in the formate of `--date_format`).
-    - `--max_num_shifts`: maximum number of shifts that each day in the schedule matrix will have.(the same as the <i>s</i> in the problem)
-    - `--shifts_names`: a list of names for each shift. The length of this argument need to equal `--max_num_shifts`.
-    - `--weekday_num_shifts`: number of valid shifts that weekdays will have. this argument needs to be less than or equal to `--max_num_shifts`. Based on the number given, the first n shifts on weekday days will be given 1 labels, and all the later shifts will be given 0 labels. 
-    - `--weekend_num_shifts`: Same as the `--weekday_num_shifts`, this argument needs to be less than or equal to `--max_num_shifts`. 
-    - `--special_weekdays`: A list of dates that are weekends by standard calendar, but should be considered as weekdays for shift number consideration.
-    - `--special_weekends`: Same as `--special_weekends, a list of dates that are weekdays by standard calendar, but should be considered as weekends for shift number consideration.
-
-    The generated schedule matrix will be stored using following flags
-    - `--data_dir`: directory that will be used for storing all data
-    - `--data_name`: name for a subdirectory which will be created to store data for a specific schedule, which the program is currently working with.
-
-
+4. Run `src/main.py` with following args
+    - file path args
+        - `--data_dir`: the root data directory that stores all scheduling data
+        - `--data_name`: name of the sub-directory within `data_dir` that stores scheduling data for the current scheduling finding task
+        - `--raw_pref_file_name`: name of the raw preference file that will be used by `PreferenceInputter` object to extract perference data. Assumed to store in `data_dir/data_name/raw_data` folder.
+        - `--unavailable_day_json_file_name`: specific shifts in specific dates/day of the week that any staffs can not work, can also be used by `PreferenceInputter` object as additional preference information. Assumed to store in `data_dir/data_name/raw_data` folder.
+        - `--solution_file_name`: file name that schedule solution will be written to. Will be stored in `data_dir/data_name/solutions`.
+    - Schedule requirements args
+        - `--start_date`: the first date in the schedule matrix (in the formate of `--date_format`).
+        - `--end_date`: the last date in the schedule matrix (in the formate of `--date_format`).
+        - `--excluding_dates`: a list of dates between `--start_date` and `--end_date` that should be excluded from the schedule matrix (in the formate of `--date_format`).
+        - `--max_num_shifts`: maximum number of shifts that each day in the schedule matrix will have.(the same as the <i>s</i> in the problem)
+        - `--shifts_names`: a list of names for each shift. The length of this argument need to equal `--max_num_shifts`.
+        - `--weekday_num_shifts`: number of valid shifts that weekdays will have. this argument needs to be less than or equal to `--max_num_shifts`. Based on the number given, the first n shifts on weekday days will be given 1 labels, and all the later shifts will be given 0 labels. 
+        - `--weekend_num_shifts`: Same as the `--weekday_num_shifts`, this argument needs to be less than or equal to `--max_num_shifts`. 
+        - `--special_weekdays`: A list of dates that are weekends by standard calendar, but should be considered as weekdays for shift number consideration.
+        - `--special_weekends`: Same as `--special_weekends, a list of dates that are weekdays by standard calendar, but should be considered as weekends for shift number consideration.
+    - Other args
+        - `--date_format`: the format string used to by `datetime.strptime` to parse and generate all the date strings provided in staff preference and schedule requirement.
+        - `--max_solve_time`: the maximum amount of time allowing google OR-tools to solve the schedule in seconds.
 
 <!-- 
 ## Generating Schedule Matrix

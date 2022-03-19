@@ -55,7 +55,7 @@ class ScheduleOutputterInterface(metaclass=abc.ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
         return (
-            hasattr(subclass, 'get_schedule_df') and \
+            hasattr(subclass, 'get_schedule_stats') and \
             callable(subclass.get_schedule_df) and \
             hasattr(subclass, "get_schedule_df") and \
             callable(subclass.get_schedule_df) and \
@@ -72,9 +72,10 @@ class ScheduleOutputterInterface(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_schedule_df(self) -> None:
+    def get_schedule_stats(self) -> pd.DataFrame:
         """
-        Print the per staff stats of the generated schedule.
+        Print the per staff stats of the generated schedule
+        and return it as a DataFrame.
         """
         raise NotImplementedError
 

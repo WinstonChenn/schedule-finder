@@ -1,0 +1,23 @@
+{
+    "Natalie O'Rourke": {
+        "03/27/22": "ALL", "04/05/22": "ALL", "04/16/22": "ALL", "05/17/22": "ALL"
+    },
+    "Aspen Tong": {
+        "05/01/22": "ALL"
+    },
+    "Vivian Yu": {"Sunday": ["Primary"]},
+    "Niem Vo": {"Friday": "ALL"},
+    "Tran Nguyen": {
+        "Wednesday": ["Secondary"]
+    },
+    "Jasmine Matchawate": {
+        "Tuesday": ["Primary"], "Thursday": ["Primary"], "Wednesday": ["Primary"]
+    },
+
+    "Noah Williams": {
+        "Wednesday": ["Primary"], "04/4/22": "ALL", "5/2/22": "ALL", 
+        "Saturday": ["Primary"], "Sunday": ["Primary"]
+    },
+    "Justyna Swierz": {
+    }
+}
