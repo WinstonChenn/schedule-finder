@@ -9,7 +9,9 @@ class PreferenceInputterInterface(metaclass=abc.ABCMeta):
             hasattr(subclass, 'get_staff_name') and \
             callable(subclass.get_staff_name) and \
             hasattr(subclass, "get_staff_pref_matrix") and \
-            callable(subclass.get_staff_pref_matrix) or \
+            callable(subclass.get_staff_pref_matrix) and \
+            hasattr(subclass, "get_staff_max_consecutive_shifts") and \
+            callable(subclass.get_staff_max_consecutive_shifts) or \
             NotImplemented
         )
 
@@ -38,6 +40,13 @@ class PreferenceInputterInterface(metaclass=abc.ABCMeta):
     def get_staff_pref_matrix(self, staff: str) -> np.ndarray:
         """
         Return the preference matrix for a given staff.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_staff_max_consecutive_shifts(self, staff: str) -> int:
+        """
+        Return the maximum number of consecutive shifts for the given staff.
         """
         raise NotImplementedError
 

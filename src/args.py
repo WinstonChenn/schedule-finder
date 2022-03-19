@@ -36,7 +36,7 @@ def get_shift_req_args(parser):
         default=[]
     )
     parser.add_argument(
-        "--special_weekends", type=int, nargs='+',
+        "--special_weekends", type=str, nargs='+',
         help="weekdays that should be consiedered as weekends, format: mm/dd/yy",
         default=[]
     )

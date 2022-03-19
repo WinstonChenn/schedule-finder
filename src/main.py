@@ -4,9 +4,9 @@ from ortools.sat.python import cp_model
 from args import get_shift_req_args
 from data_process.utils import get_date_arr, validate_datestr, \
                                is_weekend, is_same_day, contain_same_day
-from data_process.preference_inputters import ElmWinter2022PreferenceInputer
-from data_process.schedule_outputters import ElmScheduleOutputter
-from shift_matrix import get_shift_matrix
+from data_process.preference_inputters import ElmWinter2022PreferenceInputer as PreferenceInputer
+from data_process.schedule_outputters import ElmScheduleOutputter as ScheduleOutputter
+from data_process.schedule_matrix import get_schedule_matrix
 from solver.ScheduleModeler import ScheduleModeler
 from solver.utils import get_solution_matrix, print_staff_shedule_stats
 
@@ -26,14 +26,14 @@ def main(args):
         f"Unavailable day json file: {unavailable_day_url} not found"
 
     # Input shift requirements
-    shift_mat_df = get_shift_matrix(args)
+    shift_mat_df = get_schedule_matrix(args)
     date_list = shift_mat_df["date"].tolist()
     shift_list = list(filter(
         lambda x: x != "date", shift_mat_df.columns.tolist()
     ))
 
     # Input Staff preferences
-    processor = ElmWinter2022PreferenceInputer(
+    processor = PreferenceInputer(
         raw_data_url, shift_mat_df=shift_mat_df,
         date_format=args.date_format, holidays=args.holidays, 
         staff_unavailable_json=unavailable_day_url

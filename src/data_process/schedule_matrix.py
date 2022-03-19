@@ -4,12 +4,12 @@ from data_process.utils import get_date_arr, validate_datestr, \
                                is_weekend, is_same_day, contain_same_day
 from args import get_shift_req_args
 
-def get_shift_matrix(args):
+def get_schedule_matrix(args):
 
     data_dir = os.path.join(args.data_dir, args.data_name)
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
-    data_url = os.path.join(data_dir, "shift_matrix.xlsx")
+    data_url = os.path.join(data_dir, "schedule_matrix.xlsx")
     if os.path.exists(data_url) and not args.overwrite:
         print(f"Shift matrix already exists at: {data_url} "
               f"use --overwrite to overwrite")
@@ -81,4 +81,4 @@ if __name__ == "__main__":
     get_shift_req_args(parser)
 
     args = parser.parse_args()
-    get_shift_matrix(args)
+    get_schedule_matrix(args)
