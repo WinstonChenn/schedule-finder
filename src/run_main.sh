@@ -1,15 +1,14 @@
 python main.py \
     --data_dir "../data" \
-    --data_name "elm_winter_2022" \
+    --data_name "elm_spring_2022" \
     --date_format "%m/%d/%y" \
-    --start_date "1/2/22" \
-    --end_date "3/10/22" \
-    --max_num_shifts 3 \
-    --shifts_names "Primary" "Secondary" "Daytime" \
+    --start_date "3/27/22" \
+    --end_date "6/2/22" \
+    --max_num_shifts 2 \
+    --shifts_names "Primary" "Secondary" \
     --weekday_num_shifts 2 \
-    --weekend_num_shifts 3 \
-    --special_weekdays "1/2/22" \
-    --holidays "1/17/22" "2/21/22" \
-    --raw_pref_file_name "Winter Quarter on-call schedule preference (Responses).xlsx" \
+    --weekend_num_shifts 2 \
+    --special_weekends "5/30/22" \
+    --raw_pref_file_name "Spring Quarter on-call schedule preference (Responses).xlsx" \
     --unavailble_day_json_file_name "staff_unavailable_days.json" \
     --max_solve_time 20

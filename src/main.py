@@ -4,7 +4,7 @@ from ortools.sat.python import cp_model
 from args import get_shift_req_args
 from data_process.utils import get_date_arr, validate_datestr, \
                                is_weekend, is_same_day, contain_same_day
-from data_process.preference_inputters import ElmWinter2022PreferenceInputer as PreferenceInputer
+from data_process.preference_inputters import ElmSpring2022PreferenceInputer as PreferenceInputer
 from data_process.schedule_outputters import ElmScheduleOutputter as ScheduleOutputter
 from data_process.schedule_matrix import get_schedule_matrix
 from solver.ScheduleModeler import ScheduleModeler
@@ -66,7 +66,7 @@ def main(args):
     print(solver.StatusName())
 
     if solver.StatusName() != "INFEASIBLE":
-        schedule_outputter = ElmScheduleOutputter(
+        schedule_outputter = ScheduleOutputter(
             solver=solver, shift_vars=shift_vars, 
             date_list=date_list, staff_list=staff_names, 
             shift_list=shift_list, date_format=args.date_format,

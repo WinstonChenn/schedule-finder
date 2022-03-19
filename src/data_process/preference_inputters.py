@@ -152,10 +152,12 @@ class ElmWinter2022PreferenceInputer(ElmBasePreferenceInputter):
             column_name = "Holiday on-call preferences [2/21 Presidents' Day]"
         else:
             raise ValueError("Invalid holiday date")
+        return column_name
 
-class ElmSpring022PreferenceInputer(ElmBasePreferenceInputter):
+class ElmSpring2022PreferenceInputer(ElmBasePreferenceInputter):
     def get_holiday_column_name(self, curr_date: datetime) -> str:
         if curr_date == datetime(2022, 5, 30):
-            column_name = "Holiday on-call preferences [5/30 Memorial Day]"
+            column_name = "Holiday on-call preferences [5/30/2022 Memorial Day]"
         else:
             raise ValueError("Invalid holiday date")
+        return column_name
