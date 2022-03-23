@@ -4,7 +4,8 @@
         "05/29/22": "ALL"
     },
     "Aspen Tong": {
-        "05/01/22": "ALL"
+        "05/01/22": "ALL", "05/15/22": "ALL", "Monday": ["Primary"], "Tuesday": ["Primary"],
+        "Wednesday": ["Primary"], "Thursday": ["Primary"], "Friday": ["Primary"]
     },
     "Vivian Yu": {"Sunday": ["Primary"]},
     "Niem Vo": {"Friday": "ALL"},

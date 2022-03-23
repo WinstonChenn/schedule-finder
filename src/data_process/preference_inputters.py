@@ -124,7 +124,7 @@ class ElmBasePreferenceInputter(PreferenceInputterInterface):
                         except KeyError:
                             unavailable_shift = unavailable_dict[date]
                         if shift in unavailable_shift:
-                            pref_value = -2
+                            pref_value = -3
                     if pref_value is None:
                         shift_col_name = self.shift_to_column_name(date, shift)
                         pref_str = self.staff_pref_df.loc[self.staff_pref_df["Name"]==staff, shift_col_name].values[0]
